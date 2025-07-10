@@ -1,5 +1,6 @@
 // Simplified serverless function for Vercel
-import { IncomingForm } from 'formidable';
+import pkg from 'formidable';
+const { IncomingForm } = pkg;
 import fs from 'fs';
 
 // Need to disable body parser for file uploads
