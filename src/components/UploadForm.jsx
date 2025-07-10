@@ -7,8 +7,18 @@ function UploadForm({ onOcrResult }) {
   const [preview, setPreview] = useState(null);
   const [showCamera, setShowCamera] = useState(false);
   const [stream, setStream] = useState(null);
+  const [username, setUsername] = useState('');
+  const [showUsernamePrompt, setShowUsernamePrompt] = useState(false);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+
+  // Check for username in localStorage on component mount
+  useEffect(() => {
+    const savedUsername = localStorage.getItem('businessCardOcrUsername');
+    if (savedUsername) {
+      setUsername(savedUsername);
+    }
+  }, []);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -110,9 +120,19 @@ function UploadForm({ onOcrResult }) {
     e.preventDefault();
     if (!image) return;
 
+    // Check if username is provided
+    if (!username) {
+      setShowUsernamePrompt(true);
+      return;
+    }
+    
+    // Save username to localStorage for future use
+    localStorage.setItem('businessCardOcrUsername', username);
+    
     setLoading(true);
     const formData = new FormData();
     formData.append("image", image);
+    formData.append("username", username);
 
     try {
       const res = await axios.post("/api/upload", formData, {
@@ -125,10 +145,13 @@ function UploadForm({ onOcrResult }) {
         // Always pass the data, even if parsing failed
         const rawText = res.data.text || '';
         const parsedData = res.data.parsed_data || null;
+        const responseUsername = res.data.username || username;
+        const responseDate = res.data.date || new Date().toLocaleDateString();
         
-        onOcrResult(rawText, parsedData);
+        onOcrResult(rawText, parsedData, responseUsername, responseDate);
         setImage(null);
         setPreview(null);
+        setShowUsernamePrompt(false);
         // Reset file input
         const fileInput = document.getElementById('file-input');
         if (fileInput) fileInput.value = '';
@@ -176,6 +199,21 @@ function UploadForm({ onOcrResult }) {
       <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-gray-800 to-black bg-clip-text text-transparent">
         Capture Business Card
       </h2>
+      
+      {/* Username display/input */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Your Name</label>
+        <input
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Enter your name"
+          className={`w-full px-4 py-2 border ${showUsernamePrompt && !username ? 'border-red-500' : 'border-gray-300'} rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent`}
+        />
+        {showUsernamePrompt && !username && (
+          <p className="mt-1 text-sm text-red-600">Please enter your name before uploading</p>
+        )}
+      </div>
       
       {/* Camera/Upload Toggle Buttons */}
       <div className="flex space-x-4 mb-6">
@@ -266,6 +304,25 @@ function UploadForm({ onOcrResult }) {
               <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent rounded-xl pointer-events-none"></div>
             </div>
           </div>
+
+          {/* Username Input - Shown only if username is not set */}
+          {!username && (
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+              <p className="text-yellow-800 font-medium">
+                ⚠️ Please enter your name to help us improve OCR accuracy.
+              </p>
+              <div className="mt-2">
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  placeholder="Enter your name"
+                  required
+                />
+              </div>
+            </div>
+          )}
 
           <div className="flex space-x-4">
             <button

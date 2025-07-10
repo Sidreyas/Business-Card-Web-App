@@ -136,6 +136,7 @@ function App() {
   const [currentParsedData, setCurrentParsedData] = useState(null);
   const [userName, setUserName] = useState('');
   const [showNameInput, setShowNameInput] = useState(true);
+  const [currentProcessingDate, setCurrentProcessingDate] = useState('');
 
   // Load username from localStorage on component mount
   useEffect(() => {
@@ -153,8 +154,13 @@ function App() {
     }
   }, [userName]);
 
-  const handleOcrResult = (ocrText, parsedData) => {
+  const handleOcrResult = (ocrText, parsedData, responseUsername, responseDate) => {
     setCurrentOcrText(ocrText);
+    
+    // Update userName if provided from the response
+    if (responseUsername) {
+      setUserName(responseUsername);
+    }
     
     // Use AI-parsed data if available and valid, otherwise fall back to our parsing
     let finalParsedData = null;
@@ -169,6 +175,10 @@ function App() {
     }
     
     setCurrentParsedData(finalParsedData);
+    
+    // Store the processing date
+    setCurrentProcessingDate(responseDate || new Date().toLocaleDateString());
+    
     setShowModal(true);
   };
 
@@ -180,12 +190,13 @@ function App() {
       comment: comment,
       timestamp: new Date().toISOString(),
       generatedBy: userName,
-      generatedOn: new Date().toLocaleDateString()
+      generatedOn: currentProcessingDate || new Date().toLocaleDateString()
     };
     setEntries([...entries, newEntry]);
     setShowModal(false);
     setCurrentOcrText('');
     setCurrentParsedData(null);
+    setCurrentProcessingDate('');
   };
 
   const handleExportPDF = () => {
@@ -197,7 +208,7 @@ function App() {
     
     // Add generation metadata below title
     doc.setFontSize(12);
-    doc.text(`Generated on ${new Date().toLocaleDateString()} by ${userName}`, 20, 35);
+    doc.text(`Generated on ${currentProcessingDate || new Date().toLocaleDateString()} by ${userName}`, 20, 35);
     doc.text(`Total entries: ${entries.length}`, 20, 42);
     
     // Prepare structured table data (cleaned up)
