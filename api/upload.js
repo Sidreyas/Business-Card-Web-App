@@ -3,7 +3,6 @@ import { IncomingForm } from 'formidable';
 import fs from 'fs';
 import https from 'https';
 import { promisify } from 'util';
-import axios from 'axios';
 import FormData from 'form-data';
 
 // Need to disable body parser for file uploads
@@ -238,15 +237,34 @@ export default async function handler(req, res) {
           
           console.log('Sending image to OCR API...');
           
-          const ocrResponse = await axios({
-            method: 'post',
-            url: 'https://api.ocr.space/parse/image',
-            data: formData,
-            headers: {
-              ...formData.getHeaders(),
-            },
-            maxContentLength: Infinity,
-            maxBodyLength: Infinity,
+          // Use native https request instead of axios
+          const ocrResponse = await new Promise((resolve, reject) => {
+            const req = https.request(
+              {
+                method: 'POST',
+                hostname: 'api.ocr.space',
+                path: '/parse/image',
+                headers: {
+                  ...formData.getHeaders(),
+                }
+              },
+              (res) => {
+                const chunks = [];
+                res.on('data', (chunk) => chunks.push(chunk));
+                res.on('end', () => {
+                  const body = Buffer.concat(chunks).toString();
+                  try {
+                    const data = JSON.parse(body);
+                    resolve({ data });
+                  } catch (error) {
+                    reject(new Error(`Invalid JSON response: ${body}`));
+                  }
+                });
+              }
+            );
+            
+            req.on('error', reject);
+            formData.pipe(req);
           });
           
           console.log('Received OCR API response');
@@ -283,6 +301,18 @@ export default async function handler(req, res) {
           console.error("Error using OCR API:", apiError);
           console.log("Using fallback OCR response");
           
+          // Log detailed error information for debugging
+          if (apiError.response) {
+            console.error("API Response Error:", {
+              status: apiError.response.status,
+              data: apiError.response.data
+            });
+          } else if (apiError.request) {
+            console.error("API Request Error - No response received");
+          } else {
+            console.error("API Error:", apiError.message);
+          }
+          
           // Fallback to simulated response if API call fails
           return {
             text: "John Doe\n" +
@@ -295,7 +325,7 @@ export default async function handler(req, res) {
                   "San Francisco, CA 94105",
             imageSize: stats.size,
             fileName: files.image.originalFilename,
-            error: apiError.message,
+            error: apiError.message || "Unknown API error",
             usingFallback: true
           };
         }
