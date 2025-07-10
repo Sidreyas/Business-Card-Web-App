@@ -9,14 +9,14 @@
       }
     },
     {
-      "src": "api/upload.py",
+      "src": "api/index.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/api/upload",
-      "dest": "/api/upload.py"
+      "dest": "/api/index.py"
     },
     {
       "src": "/(.*)",
