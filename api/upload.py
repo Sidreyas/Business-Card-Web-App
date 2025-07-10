@@ -322,39 +322,33 @@ class BusinessCardOCRServer(BaseHTTPRequestHandler):
         
         self.wfile.write(json.dumps(error_data).encode())
 
-# Vercel serverless function handler
-def handler(request):
-    """Main handler for Vercel serverless function"""
-    from flask import Flask, request as flask_request
-    
+# Vercel serverless function
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route('/api/upload', methods=['POST', 'OPTIONS'])
+def upload():
     # Handle CORS preflight
     if request.method == 'OPTIONS':
-        return '', 200, {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
-        }
-    
-    if request.method != 'POST':
-        return {'error': 'Method not allowed'}, 405, {
-            'Access-Control-Allow-Origin': '*',
-            'Content-Type': 'application/json',
-        }
+        response = jsonify({'message': 'OK'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        return response
     
     try:
         # Check if we have multipart form data
         if 'image' not in request.files:
-            return {'error': 'No image file provided'}, 400, {
-                'Access-Control-Allow-Origin': '*',
-                'Content-Type': 'application/json',
-            }
+            response = jsonify({'error': 'No image file provided'})
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response, 400
         
         file = request.files['image']
         if file.filename == '':
-            return {'error': 'No file selected'}, 400, {
-                'Access-Control-Allow-Origin': '*',
-                'Content-Type': 'application/json',
-            }
+            response = jsonify({'error': 'No file selected'})
+            response.headers.add('Access-Control-Allow-Origin', '*')
+            return response, 400
         
         # Read image data
         image_data = file.read()
@@ -362,14 +356,13 @@ def handler(request):
         # Perform OCR with AI parsing
         result = perform_ocr_with_ai_parsing(image_data)
         
-        return result, 200, {
-            'Access-Control-Allow-Origin': '*',
-            'Content-Type': 'application/json',
-        }
+        response = jsonify(result)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
         
     except Exception as e:
         print(f"Handler error: {e}")
-        return {
+        error_result = {
             'error': str(e),
             'text': '',
             'parsed_data': {
@@ -382,7 +375,12 @@ def handler(request):
                 'address': ''
             },
             'success': False
-        }, 500, {
-            'Access-Control-Allow-Origin': '*',
-            'Content-Type': 'application/json',
         }
+        response = jsonify(error_result)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response, 500
+
+# For Vercel
+def handler(request):
+    with app.test_request_context(request.path, method=request.method, data=request.get_data(), headers=request.headers):
+        return app.dispatch_request()
