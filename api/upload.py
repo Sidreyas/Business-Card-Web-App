@@ -325,40 +325,64 @@ class BusinessCardOCRServer(BaseHTTPRequestHandler):
 # Vercel serverless function handler
 def handler(request):
     """Main handler for Vercel serverless function"""
+    from flask import Flask, request as flask_request
+    
+    # Handle CORS preflight
+    if request.method == 'OPTIONS':
+        return '', 200, {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+        }
+    
+    if request.method != 'POST':
+        return {'error': 'Method not allowed'}, 405, {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json',
+        }
+    
     try:
-        # Create a simple HTTP server to handle the request
-        server = BusinessCardOCRServer()
-        
-        # Mock the request for our server
-        if request.method == 'POST':
-            server.do_POST()
-        elif request.method == 'OPTIONS':
-            server.do_OPTIONS()
-        else:
-            return {
-                'statusCode': 405,
-                'headers': {
-                    'Access-Control-Allow-Origin': '*',
-                    'Content-Type': 'application/json',
-                },
-                'body': json.dumps({'error': 'Method not allowed'})
-            }
-            
-        return {
-            'statusCode': 200,
-            'headers': {
+        # Check if we have multipart form data
+        if 'image' not in request.files:
+            return {'error': 'No image file provided'}, 400, {
                 'Access-Control-Allow-Origin': '*',
                 'Content-Type': 'application/json',
-            },
-            'body': json.dumps({'success': True})
+            }
+        
+        file = request.files['image']
+        if file.filename == '':
+            return {'error': 'No file selected'}, 400, {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json',
+            }
+        
+        # Read image data
+        image_data = file.read()
+        
+        # Perform OCR with AI parsing
+        result = perform_ocr_with_ai_parsing(image_data)
+        
+        return result, 200, {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json',
         }
         
     except Exception as e:
+        print(f"Handler error: {e}")
         return {
-            'statusCode': 500,
-            'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Content-Type': 'application/json',
+            'error': str(e),
+            'text': '',
+            'parsed_data': {
+                'name': '',
+                'title': '',
+                'company': '',
+                'email': '',
+                'phone': '',
+                'website': '',
+                'address': ''
             },
-            'body': json.dumps({'error': str(e)})
+            'success': False
+        }, 500, {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json',
         }
