@@ -1,11 +1,8 @@
-from http.server import BaseHTTPRequestHandler
 import json
 import os
 import io
 import re
 import base64
-import cgi
-from urllib.parse import parse_qs
 
 # Import OCR and AI libraries
 try:
@@ -247,108 +244,38 @@ def perform_ocr_with_ai_parsing(image_data):
             'error': str(e)
         }
 
-class BusinessCardOCRServer(BaseHTTPRequestHandler):
-    def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.end_headers()
-
-    def do_POST(self):
-        try:
-            content_type = self.headers.get('Content-Type', '')
-            
-            if 'multipart/form-data' in content_type:
-                # Parse multipart form data
-                form = cgi.FieldStorage(
-                    fp=self.rfile,
-                    headers=self.headers,
-                    environ={'REQUEST_METHOD': 'POST'}
-                )
-                
-                if 'image' not in form:
-                    self.send_error_response(400, 'No image file provided')
-                    return
-                
-                image_field = form['image']
-                if not image_field.filename:
-                    self.send_error_response(400, 'No file selected')
-                    return
-                
-                # Read image data
-                image_data = image_field.file.read()
-                
-                # Perform OCR with AI parsing
-                result = perform_ocr_with_ai_parsing(image_data)
-                
-                self.send_success_response(result)
-            else:
-                self.send_error_response(400, 'Content-Type must be multipart/form-data')
-        
-        except Exception as e:
-            print(f"Handler error: {e}")
-            error_result = {
-                'error': str(e),
-                'text': '',
-                'parsed_data': {
-                    'name': '',
-                    'title': '',
-                    'company': '',
-                    'email': '',
-                    'phone': '',
-                    'website': '',
-                    'address': ''
-                },
-                'success': False
-            }
-            self.send_error_response(500, error_result)
-
-    def send_success_response(self, data):
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-        self.wfile.write(json.dumps(data).encode())
-
-    def send_error_response(self, status_code, error_data):
-        self.send_response(status_code)
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-        
-        if isinstance(error_data, str):
-            error_data = {'error': error_data}
-        
-        self.wfile.write(json.dumps(error_data).encode())
-
 # Vercel serverless function
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-@app.route('/api/upload', methods=['POST', 'OPTIONS'])
-def upload():
+def handler(request):
     # Handle CORS preflight
     if request.method == 'OPTIONS':
-        response = jsonify({'message': 'OK'})
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
-        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
-        return response
+        return '', 200, {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+        }
     
     try:
         # Check if we have multipart form data
         if 'image' not in request.files:
-            response = jsonify({'error': 'No image file provided'})
-            response.headers.add('Access-Control-Allow-Origin', '*')
-            return response, 400
+            return {
+                'error': 'No image file provided'
+            }, 400, {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json',
+            }
         
         file = request.files['image']
         if file.filename == '':
-            response = jsonify({'error': 'No file selected'})
-            response.headers.add('Access-Control-Allow-Origin', '*')
-            return response, 400
+            return {
+                'error': 'No file selected'
+            }, 400, {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json',
+            }
         
         # Read image data
         image_data = file.read()
@@ -356,9 +283,10 @@ def upload():
         # Perform OCR with AI parsing
         result = perform_ocr_with_ai_parsing(image_data)
         
-        response = jsonify(result)
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        return response
+        return result, 200, {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json',
+        }
         
     except Exception as e:
         print(f"Handler error: {e}")
@@ -376,11 +304,7 @@ def upload():
             },
             'success': False
         }
-        response = jsonify(error_result)
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        return response, 500
-
-# For Vercel
-def handler(request):
-    with app.test_request_context(request.path, method=request.method, data=request.get_data(), headers=request.headers):
-        return app.dispatch_request()
+        return error_result, 500, {
+            'Access-Control-Allow-Origin': '*',
+            'Content-Type': 'application/json',
+        }
