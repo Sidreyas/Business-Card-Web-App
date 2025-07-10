@@ -124,9 +124,12 @@ async function performOCR(imageBuffer) {
     formData.append('apikey', 'K83418579388957'); // Free OCR.space API key
     formData.append('language', 'eng');
     formData.append('isOverlayRequired', 'false');
+    formData.append('OCREngine', '2'); // Use engine 2 for better accuracy
+    formData.append('detectOrientation', 'true');
+    formData.append('scale', 'true');
     formData.append('base64Image', `data:image/jpeg;base64,${base64Image}`);
     
-    console.log('Calling OCR.space API...');
+    console.log('Calling OCR.space API with enhanced settings...');
     
     // Make the API call using fetch
     const response = await fetch('https://api.ocr.space/parse/image', {
@@ -142,22 +145,33 @@ async function performOCR(imageBuffer) {
     }
     
     const result = await response.json();
-    console.log('OCR API response received');
+    console.log('OCR API response received:', JSON.stringify(result, null, 2));
     
     if (result.ParsedResults && result.ParsedResults.length > 0) {
       const extractedText = result.ParsedResults[0].ParsedText;
-      console.log('OCR text extracted:', extractedText.substring(0, 100) + '...');
+      console.log('OCR text extracted successfully:', extractedText);
+      
+      // Clean up the extracted text
+      const cleanedText = extractedText
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .join('\n');
       
       return {
-        text: extractedText,
-        success: true
+        text: cleanedText,
+        success: true,
+        rawResponse: result
       };
     } else {
-      console.log('OCR failed, using fallback');
+      console.log('OCR failed - no parsed results:', result);
       return {
         text: "Unable to extract text from image. Please try with a clearer image.",
         success: false,
-        usingFallback: true
+        usingFallback: true,
+        error: result.ErrorMessage || 'No text found'
       };
     }
     
@@ -166,7 +180,8 @@ async function performOCR(imageBuffer) {
     return {
       text: "Error processing image: " + error.message,
       success: false,
-      usingFallback: true
+      usingFallback: true,
+      error: error.message
     };
   }
 }
