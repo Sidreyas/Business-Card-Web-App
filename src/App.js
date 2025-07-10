@@ -23,23 +23,25 @@ const parseBusinessCard = (ocrText) => {
   // Email regex
   const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
   
-  // Phone regex (various formats)
+  // Enhanced phone regex (various formats)
   const phoneRegex = /(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})|(\+\d{1,3}[-.\s]?)?\d{8,15}/g;
   
-  // Website regex
+  // Enhanced website regex
   const websiteRegex = /(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?/g;
   
-  // Common title keywords
+  // Enhanced common title keywords
   const titleKeywords = [
     'CEO', 'CTO', 'CFO', 'COO', 'President', 'Director', 'Manager', 'Senior', 'Lead', 
     'Engineer', 'Developer', 'Designer', 'Analyst', 'Consultant', 'Specialist', 
-    'Executive', 'Vice President', 'VP', 'Assistant', 'Coordinator', 'Supervisor'
+    'Executive', 'Vice President', 'VP', 'Assistant', 'Coordinator', 'Supervisor',
+    'Partner', 'Founder', 'Owner', 'Principal', 'Chief', 'Head', 'Administrator'
   ];
   
-  // Common company indicators
+  // Enhanced common company indicators
   const companyIndicators = [
     'Inc', 'Corp', 'Corporation', 'LLC', 'Ltd', 'Limited', 'Company', 'Co.',
-    'Solutions', 'Services', 'Systems', 'Technologies', 'Tech', 'Group', 'Associates'
+    'Solutions', 'Services', 'Systems', 'Technologies', 'Tech', 'Group', 'Associates',
+    'Partners', 'Consulting', 'Holdings', 'Enterprises', 'International', 'Global'
   ];
 
   lines.forEach((line, index) => {
@@ -59,8 +61,12 @@ const parseBusinessCard = (ocrText) => {
 
     // Extract website
     const websiteMatch = line.match(websiteRegex);
-    if (websiteMatch && !parsed.website) {
-      parsed.website = websiteMatch[0];
+    if (websiteMatch && !parsed.website && !line.includes('@')) {
+      let website = websiteMatch[0];
+      if (!website.startsWith('http') && !website.startsWith('www.')) {
+        website = 'www.' + website;
+      }
+      parsed.website = website;
       return;
     }
 
@@ -111,19 +117,49 @@ const parseBusinessCard = (ocrText) => {
     }
   }
 
-  // Remaining lines could be address
-  const addressLines = lines.filter(line => 
-    line !== parsed.name && 
-    line !== parsed.title && 
-    line !== parsed.company && 
-    line !== parsed.email && 
-    line !== parsed.phone && 
-    line !== parsed.website &&
-    line.length > 5
-  );
+  // Enhanced address extraction
+  const addressKeywords = ['street', 'st', 'avenue', 'ave', 'road', 'rd', 'suite', 'floor', 'building', 'blvd', 'drive', 'dr', 'lane', 'ln', 'way'];
+  let addressLines = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const lowerLine = line.toLowerCase();
+    
+    // Look for address patterns
+    if ((
+      /\b\d+\s+[A-Za-z0-9\s,]+/.test(line) || // Street number pattern
+      addressKeywords.some(keyword => lowerLine.includes(keyword)) ||
+      /[A-Z][a-z]+,\s*[A-Z]{2}\s+\d{5}/.test(line) // City, State ZIP pattern
+    ) && !lowerLine.includes('@') && !phoneRegex.test(line)) {
+      addressLines.push(line.trim());
+      
+      // Check next line for city/state/zip
+      if (i + 1 < lines.length) {
+        const nextLine = lines[i + 1];
+        if (/[A-Z][a-z]+,\s*[A-Z]{2}\s+\d{5}/.test(nextLine)) {
+          addressLines.push(nextLine.trim());
+        }
+      }
+    }
+  }
   
   if (addressLines.length > 0) {
     parsed.address = addressLines.join(', ');
+  } else {
+    // If no address found by keywords, use remaining lines
+    const remainingLines = lines.filter(line => 
+      line !== parsed.name && 
+      line !== parsed.title && 
+      line !== parsed.company && 
+      line !== parsed.email && 
+      line !== parsed.phone && 
+      line !== parsed.website &&
+      line.length > 5
+    );
+    
+    if (remainingLines.length > 0) {
+      parsed.address = remainingLines.join(', ');
+    }
   }
 
   return parsed;
@@ -135,7 +171,6 @@ function App() {
   const [currentOcrText, setCurrentOcrText] = useState('');
   const [currentParsedData, setCurrentParsedData] = useState(null);
   const [userName, setUserName] = useState('');
-  const [showNameInput, setShowNameInput] = useState(true);
   const [currentProcessingDate, setCurrentProcessingDate] = useState('');
 
   // Load username from localStorage on component mount
@@ -143,13 +178,14 @@ function App() {
     const savedUserName = localStorage.getItem('businessCardOcrUserName');
     if (savedUserName) {
       setUserName(savedUserName);
-      setShowNameInput(false);
+    } else {
+      setUserName('Guest'); // Default to Guest
     }
   }, []);
 
   // Save username to localStorage when it changes
   useEffect(() => {
-    if (userName) {
+    if (userName && userName !== 'Guest') {
       localStorage.setItem('businessCardOcrUserName', userName);
     }
   }, [userName]);
@@ -273,102 +309,46 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8">
-        <div className="text-center mb-6 md:mb-12">
-          <h1 className="text-3xl md:text-5xl font-bold mb-2 md:mb-4 bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="container mx-auto px-4 py-4 sm:py-8 max-w-7xl">
+        {/* Header */}
+        <div className="text-center mb-4 sm:mb-8">
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2">
             Business Card OCR
           </h1>
-          <p className="text-sm md:text-xl text-gray-300 font-light">
-            Extract contact information with AI-powered precision
+          <p className="text-sm sm:text-lg text-gray-600">
+            Extract contact information from business cards with AI
           </p>
-          <div className="w-16 md:w-24 h-1 bg-gradient-to-r from-gray-500 to-white mx-auto mt-2 md:mt-4 rounded-full"></div>
         </div>
-        
-        {/* Username Input Modal */}
-        {showNameInput && (
-          <div className="fixed inset-0 bg-gradient-to-br from-black/80 via-gray-900/90 to-black/80 backdrop-blur-sm flex items-center justify-center z-50">
-            <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-2xl max-w-md w-full mx-4 border border-gray-200">
-              <div className="px-6 py-5 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 rounded-t-2xl">
-                <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-black bg-clip-text text-transparent">
-                  Welcome to Business Card OCR
-                </h3>
-                <p className="text-sm text-gray-600 mt-2 font-medium">
-                  Please enter your name to get started
-                </p>
-              </div>
-              <div className="px-6 py-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Your Name:
-                </label>
-                <input
-                  type="text"
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  placeholder="Enter your full name"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && userName.trim()) {
-                      setShowNameInput(false);
-                    }
-                  }}
-                  autoFocus
-                />
-              </div>
-              <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
-                <button
-                  onClick={() => {
-                    if (userName.trim()) {
-                      setShowNameInput(false);
-                    } else {
-                      alert('Please enter your name to continue');
-                    }
-                  }}
-                  disabled={!userName.trim()}
-                  className={`px-6 py-3 rounded-lg font-medium transition-all duration-300 ${
-                    userName.trim()
-                      ? 'bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-700 hover:to-gray-900 transform hover:scale-105 shadow-lg'
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                  }`}
-                >
-                  Continue
-                </button>
-              </div>
+
+        {/* User Info Bar */}
+        <div className="mb-4 sm:mb-8 bg-gradient-to-r from-gray-800 to-black rounded-lg p-3 sm:p-4 shadow-lg">
+          <div className="flex justify-between items-center text-white">
+            <div className="flex items-center space-x-3">
+              <span className="text-sm sm:text-base font-medium">Welcome, {userName}!</span>
             </div>
+            <button
+              onClick={() => {
+                const newName = prompt('Enter your name:', userName);
+                if (newName && newName.trim()) {
+                  setUserName(newName.trim());
+                }
+              }}
+              className="text-xs sm:text-sm text-gray-300 hover:text-white transition-colors"
+            >
+              Change User
+            </button>
           </div>
-        )}
+        </div>
 
-        {!showNameInput && (
-          <>
-            {/* User Info Bar */}
-            <div className="mb-8 bg-gradient-to-r from-gray-800 to-black rounded-lg p-4 shadow-lg">
-              <div className="flex justify-between items-center text-white">
-                <div className="flex items-center space-x-3">
-                  <span className="font-medium">Welcome, {userName}!</span>
-                </div>
-                <button
-                  onClick={() => {
-                    setUserName('');
-                    setShowNameInput(true);
-                    localStorage.removeItem('businessCardOcrUserName');
-                  }}
-                  className="text-sm text-gray-300 hover:text-white transition-colors"
-                >
-                  Change User
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div>
-                <UploadForm onOcrResult={handleOcrResult} />
-              </div>
-              <div>
-                <DataTable entries={entries} onExportPDF={handleExportPDF} />
-              </div>
-            </div>
-          </>
-        )}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
+          <div>
+            <UploadForm onOcrResult={handleOcrResult} />
+          </div>
+          <div>
+            <DataTable entries={entries} onExportPDF={handleExportPDF} />
+          </div>
+        </div>
 
         <CommentModal 
           show={showModal}

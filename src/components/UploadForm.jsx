@@ -12,7 +12,7 @@ function UploadForm({ onOcrResult }) {
 
   // Get username from localStorage
   const getUsername = () => {
-    return localStorage.getItem('businessCardOcrUsername') || 'Guest';
+    return localStorage.getItem('businessCardOcrUserName') || 'Guest';
   };
 
   const handleFileChange = (e) => {
@@ -276,25 +276,6 @@ function UploadForm({ onOcrResult }) {
               <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent rounded-xl pointer-events-none"></div>
             </div>
           </div>
-
-          {/* Username Input - Shown only if username is not set */}
-          {!username && (
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
-              <p className="text-yellow-800 font-medium">
-                ⚠️ Please enter your name to help us improve OCR accuracy.
-              </p>
-              <div className="mt-2">
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  placeholder="Enter your name"
-                  required
-                />
-              </div>
-            </div>
-          )}
 
           <div className="flex space-x-4">
             <button

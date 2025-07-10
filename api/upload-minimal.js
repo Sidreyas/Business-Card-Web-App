@@ -188,6 +188,8 @@ async function performOCR(imageBuffer) {
 
 // Helper function to extract information from OCR text
 function extractBusinessCardInfo(text) {
+  console.log('Extracting business card info from:', text);
+  
   const parsedData = {
     name: '',
     title: '',
@@ -195,7 +197,8 @@ function extractBusinessCardInfo(text) {
     email: '',
     phone: '',
     website: '',
-    address: ''
+    address: '',
+    rawText: text
   };
 
   if (!text || text.includes("Unable to extract") || text.includes("Error processing")) {
@@ -209,15 +212,15 @@ function extractBusinessCardInfo(text) {
     parsedData.email = emailMatches[0];
   }
   
-  // Extract phone numbers
-  const phoneRegex = /\b(?:\+\d{1,2}\s?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b/g;
+  // Enhanced phone number extraction
+  const phoneRegex = /(?:\+?1[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})|(\+\d{1,3}[-.\s]?)?\d{8,15}/g;
   const phoneMatches = text.match(phoneRegex);
   if (phoneMatches && phoneMatches.length > 0) {
     parsedData.phone = phoneMatches[0];
   }
   
-  // Extract website
-  const websiteRegex = /\b(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9][-a-zA-Z0-9]*[a-zA-Z0-9]\.)+[a-zA-Z]{2,}(?:\/\S*)?/g;
+  // Enhanced website extraction
+  const websiteRegex = /(?:https?:\/\/)?(?:www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\.[a-zA-Z]{2,})?/g;
   const websiteMatches = text.match(websiteRegex);
   
   if (websiteMatches && websiteMatches.length > 0) {
@@ -226,7 +229,7 @@ function extractBusinessCardInfo(text) {
     if (nonEmailMatches.length > 0) {
       let website = nonEmailMatches[0];
       
-      const validTLDs = ['com', 'net', 'org', 'io', 'co', 'gov', 'edu'];
+      const validTLDs = ['com', 'net', 'org', 'io', 'co', 'gov', 'edu', 'ca', 'uk', 'de', 'fr', 'au', 'jp', 'in'];
       const bestMatches = nonEmailMatches.filter(match => {
         const domain = match.split('.').pop().toLowerCase();
         return validTLDs.includes(domain);
@@ -247,36 +250,93 @@ function extractBusinessCardInfo(text) {
   // Split the text into lines
   const lines = text.split('\n').filter(line => line.trim() !== '');
   
-  // Extract name, title, company from first few lines
-  let lineIndex = 0;
+  // Common title keywords
+  const titleKeywords = [
+    'CEO', 'CTO', 'CFO', 'COO', 'President', 'Director', 'Manager', 'Senior', 'Lead', 
+    'Engineer', 'Developer', 'Designer', 'Analyst', 'Consultant', 'Specialist', 
+    'Executive', 'Vice President', 'VP', 'Assistant', 'Coordinator', 'Supervisor',
+    'Partner', 'Founder', 'Owner', 'Principal', 'Chief', 'Head', 'Administrator'
+  ];
   
-  // Skip lines that are obviously not names (emails, phones, websites)
-  while (lineIndex < lines.length) {
-    const line = lines[lineIndex].trim();
-    if (!line.includes('@') && !line.includes('www.') && !/\d{3}[-.\s]?\d{3}[-.\s]?\d{4}/.test(line)) {
-      if (!parsedData.name) {
-        parsedData.name = line;
-      } else if (!parsedData.title) {
-        parsedData.title = line;
-      } else if (!parsedData.company) {
-        parsedData.company = line;
-        break;
-      }
+  // Common company indicators
+  const companyIndicators = [
+    'Inc', 'Corp', 'Corporation', 'LLC', 'Ltd', 'Limited', 'Company', 'Co.',
+    'Solutions', 'Services', 'Systems', 'Technologies', 'Tech', 'Group', 'Associates',
+    'Partners', 'Consulting', 'Holdings', 'Enterprises', 'International', 'Global'
+  ];
+  
+  // Extract name, title, company from lines
+  let foundName = false;
+  let foundTitle = false;
+  let foundCompany = false;
+  
+  for (let i = 0; i < lines.length && (!foundName || !foundTitle || !foundCompany); i++) {
+    const line = lines[i].trim();
+    
+    // Skip lines that are obviously not names/titles/companies
+    if (line.includes('@') || line.includes('www.') || phoneRegex.test(line) || 
+        line.length < 2 || /^\d+$/.test(line)) {
+      continue;
     }
-    lineIndex++;
+    
+    // Check if line contains title keywords
+    const hasTitle = titleKeywords.some(keyword => 
+      line.toLowerCase().includes(keyword.toLowerCase())
+    );
+    
+    // Check if line contains company indicators
+    const hasCompany = companyIndicators.some(indicator => 
+      line.toLowerCase().includes(indicator.toLowerCase())
+    );
+    
+    if (hasTitle && !foundTitle) {
+      parsedData.title = line;
+      foundTitle = true;
+    } else if (hasCompany && !foundCompany) {
+      parsedData.company = line;
+      foundCompany = true;
+    } else if (!foundName && !hasTitle && !hasCompany) {
+      // First non-contact line that's not a title or company is likely a name
+      parsedData.name = line;
+      foundName = true;
+    }
   }
   
-  // Extract address
-  const addressKeywords = ['street', 'st', 'avenue', 'ave', 'road', 'rd', 'suite', 'floor', 'building'];
+  // If we didn't find name/title/company using keywords, use positional logic
+  if (!foundName || !foundTitle || !foundCompany) {
+    let lineIndex = 0;
+    
+    // Skip lines that are obviously not names (emails, phones, websites)
+    while (lineIndex < lines.length) {
+      const line = lines[lineIndex].trim();
+      if (!line.includes('@') && !line.includes('www.') && !phoneRegex.test(line) && line.length > 2) {
+        if (!parsedData.name) {
+          parsedData.name = line;
+        } else if (!parsedData.title) {
+          parsedData.title = line;
+        } else if (!parsedData.company) {
+          parsedData.company = line;
+          break;
+        }
+      }
+      lineIndex++;
+    }
+  }
+  
+  // Enhanced address extraction
+  const addressKeywords = ['street', 'st', 'avenue', 'ave', 'road', 'rd', 'suite', 'floor', 'building', 'blvd', 'drive', 'dr', 'lane', 'ln', 'way'];
   let addressLines = [];
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const lowerLine = line.toLowerCase();
     
-    if (/\b\d+\s+[A-Za-z0-9\s,]+/.test(line) && 
-        addressKeywords.some(keyword => lowerLine.includes(keyword)) && 
-        !lowerLine.includes('@')) {
+    // Look for address patterns
+    if ((
+      /\b\d+\s+[A-Za-z0-9\s,]+/.test(line) || // Street number pattern
+      addressKeywords.some(keyword => lowerLine.includes(keyword)) ||
+      /[A-Z][a-z]+,\s*[A-Z]{2}\s+\d{5}/.test(line) // City, State ZIP pattern
+    ) && !lowerLine.includes('@') && !phoneRegex.test(line)) {
       addressLines.push(line.trim());
       
       // Check next line for city/state/zip
@@ -286,7 +346,6 @@ function extractBusinessCardInfo(text) {
           addressLines.push(nextLine.trim());
         }
       }
-      break;
     }
   }
   
@@ -294,5 +353,6 @@ function extractBusinessCardInfo(text) {
     parsedData.address = addressLines.join(', ');
   }
   
+  console.log('Extracted business card data:', parsedData);
   return parsedData;
 }
