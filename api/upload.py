@@ -247,7 +247,7 @@ def perform_ocr_with_ai_parsing(image_data):
             'error': str(e)
         }
 
-class handler(BaseHTTPRequestHandler):
+class BusinessCardOCRServer(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
@@ -321,3 +321,44 @@ class handler(BaseHTTPRequestHandler):
             error_data = {'error': error_data}
         
         self.wfile.write(json.dumps(error_data).encode())
+
+# Vercel serverless function handler
+def handler(request):
+    """Main handler for Vercel serverless function"""
+    try:
+        # Create a simple HTTP server to handle the request
+        server = BusinessCardOCRServer()
+        
+        # Mock the request for our server
+        if request.method == 'POST':
+            server.do_POST()
+        elif request.method == 'OPTIONS':
+            server.do_OPTIONS()
+        else:
+            return {
+                'statusCode': 405,
+                'headers': {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json',
+                },
+                'body': json.dumps({'error': 'Method not allowed'})
+            }
+            
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json',
+            },
+            'body': json.dumps({'success': True})
+        }
+        
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Content-Type': 'application/json',
+            },
+            'body': json.dumps({'error': str(e)})
+        }
