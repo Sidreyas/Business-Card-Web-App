@@ -172,6 +172,33 @@ function App() {
   const [currentParsedData, setCurrentParsedData] = useState(null);
   const [userName, setUserName] = useState('');
   const [currentProcessingDate, setCurrentProcessingDate] = useState('');
+  const [notification, setNotification] = useState('');
+
+  // Load entries from localStorage on component mount
+  useEffect(() => {
+    const savedEntries = localStorage.getItem('businessCardOcrEntries');
+    if (savedEntries) {
+      try {
+        const parsedEntries = JSON.parse(savedEntries);
+        setEntries(parsedEntries);
+        if (parsedEntries.length > 0) {
+          setNotification(`Loaded ${parsedEntries.length} saved business card${parsedEntries.length > 1 ? 's' : ''} from your device.`);
+          setTimeout(() => setNotification(''), 3000);
+        }
+      } catch (error) {
+        console.error('Error parsing saved entries:', error);
+        // If there's an error, start with empty array
+        setEntries([]);
+      }
+    }
+  }, []);
+
+  // Save entries to localStorage whenever entries change
+  useEffect(() => {
+    if (entries.length > 0) {
+      localStorage.setItem('businessCardOcrEntries', JSON.stringify(entries));
+    }
+  }, [entries]);
 
   // Load username from localStorage on component mount
   useEffect(() => {
@@ -308,6 +335,19 @@ function App() {
     doc.save(`business-cards-${new Date().getTime()}.pdf`);
   };
 
+  const handleClearData = () => {
+    const confirmClear = window.confirm(
+      'Are you sure you want to clear all saved business card data? This action cannot be undone.'
+    );
+    
+    if (confirmClear) {
+      setEntries([]);
+      localStorage.removeItem('businessCardOcrEntries');
+      setNotification('All data has been cleared successfully.');
+      setTimeout(() => setNotification(''), 3000);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-4 sm:py-8 max-w-7xl">
@@ -341,12 +381,22 @@ function App() {
           </div>
         </div>
 
+        {/* Notification */}
+        {notification && (
+          <div className="mb-4 sm:mb-8 bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 shadow-sm">
+            <div className="flex items-center">
+              <span className="text-green-600 mr-2">✓</span>
+              <span className="text-green-800 text-sm sm:text-base">{notification}</span>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
           <div>
             <UploadForm onOcrResult={handleOcrResult} />
           </div>
           <div>
-            <DataTable entries={entries} onExportPDF={handleExportPDF} />
+            <DataTable entries={entries} onExportPDF={handleExportPDF} onClearData={handleClearData} />
           </div>
         </div>
 

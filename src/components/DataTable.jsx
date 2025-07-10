@@ -1,6 +1,6 @@
 import React from "react";
 
-function DataTable({ entries, onExportPDF }) {
+function DataTable({ entries, onExportPDF, onClearData }) {
   if (entries.length === 0) {
     return (
       <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl shadow-2xl p-8 border border-gray-200">
@@ -24,12 +24,20 @@ function DataTable({ entries, onExportPDF }) {
         <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-black bg-clip-text text-transparent">
           Extracted Entries ({entries.length})
         </h2>
-        <button
-          onClick={onExportPDF}
-          className="bg-gradient-to-r from-gray-800 to-black hover:from-gray-700 hover:to-gray-900 text-white px-6 py-3 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 shadow-lg"
-        >
-          Export PDF
-        </button>
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+          <button
+            onClick={onClearData}
+            className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 transform hover:scale-105 shadow-lg"
+          >
+            Clear All
+          </button>
+          <button
+            onClick={onExportPDF}
+            className="bg-gradient-to-r from-gray-800 to-black hover:from-gray-700 hover:to-gray-900 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 transform hover:scale-105 shadow-lg"
+          >
+            Export PDF
+          </button>
+        </div>
       </div>
       
       <div className="overflow-x-auto max-h-96 overflow-y-auto">
