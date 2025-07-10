@@ -16,6 +16,10 @@
   "routes": [
     {
       "src": "/api/upload",
+      "dest": "/api/upload-minimal.js"
+    },
+    {
+      "src": "/api/upload-simple",
       "dest": "/api/upload-simple.js"
     },
     {
