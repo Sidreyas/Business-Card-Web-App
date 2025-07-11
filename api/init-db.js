@@ -31,6 +31,93 @@ export default async function handler(req, res) {
     
     if (!connectionTest) {
       return res.status(500).json({
+        success: false,
+        error: 'Database connection failed',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Create users table
+    const createUsersTable = `
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(255) UNIQUE NOT NULL,
+        last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        total_cards INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+
+    // Create business_card_entries table
+    const createBusinessCardEntriesTable = `
+      CREATE TABLE IF NOT EXISTS business_card_entries (
+        id SERIAL PRIMARY KEY,
+        user_name VARCHAR(255) NOT NULL,
+        ocr_text TEXT NOT NULL,
+        ocr_method VARCHAR(50) NOT NULL,
+        parsing_method VARCHAR(50) NOT NULL,
+        name VARCHAR(255),
+        title VARCHAR(255),
+        company VARCHAR(255),
+        email VARCHAR(255),
+        phone VARCHAR(50),
+        website VARCHAR(255),
+        address TEXT,
+        user_comment TEXT,
+        ocr_success BOOLEAN DEFAULT TRUE,
+        parsing_success BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+
+    // Create business_card_summary view for easier querying
+    const createSummaryView = `
+      CREATE OR REPLACE VIEW business_card_summary AS
+      SELECT 
+        bce.*,
+        u.last_active as user_last_active,
+        u.total_cards as user_total_cards
+      FROM business_card_entries bce
+      LEFT JOIN users u ON bce.user_name = u.username
+      ORDER BY bce.created_at DESC;
+    `;
+
+    // Execute table creation queries
+    await query(createUsersTable);
+    console.log('Users table created/verified');
+
+    await query(createBusinessCardEntriesTable);
+    console.log('Business card entries table created/verified');
+
+    await query(createSummaryView);
+    console.log('Business card summary view created/verified');
+
+    // Test the tables by checking if they exist
+    const tablesCheck = await query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' 
+      AND table_name IN ('users', 'business_card_entries')
+      ORDER BY table_name;
+    `);
+
+    const viewsCheck = await query(`
+      SELECT table_name 
+      FROM information_schema.views 
+      WHERE table_schema = 'public' 
+      AND table_name = 'business_card_summary';
+    `);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Database initialized successfully',
+      tables_created: tablesCheck.rows.map(row => row.table_name),
+      views_created: viewsCheck.rows.map(row => row.table_name),
+      timestamp: new Date().toISOString()
+    });
+    
+    if (!connectionTest) {
+      return res.status(500).json({
         error: 'Database connection failed',
         success: false
       });

@@ -1,31 +1,21 @@
 -- Business Card OCR Database Schema
 -- PostgreSQL Schema for centralized data storage
 
--- Users table to manage unique usernames
+-- SQL schema for users table
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    username VARCHAR(100) UNIQUE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    username VARCHAR(255) UNIQUE NOT NULL,
     last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    total_cards INTEGER DEFAULT 0
+    total_cards INT DEFAULT 0
 );
 
--- Create index for username lookups
-CREATE INDEX IF NOT EXISTS idx_users_username ON users (username);
-
--- Main table for all business card entries
+-- SQL schema for business_card_entries table
 CREATE TABLE IF NOT EXISTS business_card_entries (
     id SERIAL PRIMARY KEY,
-    
-    -- User Information
-    user_name VARCHAR(100) NOT NULL,
-    
-    -- OCR Results
-    ocr_text TEXT,
-    ocr_method VARCHAR(50), -- 'amazon_textract', 'google_vision', 'tesseract'
-    parsing_method VARCHAR(50) DEFAULT 'rule_based', -- 'rule_based', 'ai', 'fallback'
-    
-    -- Parsed Business Card Data
+    user_name VARCHAR(255) NOT NULL,
+    ocr_text TEXT NOT NULL,
+    ocr_method VARCHAR(50) NOT NULL,
+    parsing_method VARCHAR(50) NOT NULL,
     name VARCHAR(255),
     title VARCHAR(255),
     company VARCHAR(255),
@@ -33,19 +23,20 @@ CREATE TABLE IF NOT EXISTS business_card_entries (
     phone VARCHAR(50),
     website VARCHAR(255),
     address TEXT,
-    
-    -- User Comments and Metadata
     user_comment TEXT,
-    
-    -- Timestamps
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    generated_on DATE DEFAULT CURRENT_DATE,
-    
-    -- Optional: Success indicators
-    ocr_success BOOLEAN DEFAULT true,
-    parsing_success BOOLEAN DEFAULT true
+    ocr_success BOOLEAN DEFAULT TRUE,
+    parsing_success BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Add foreign key constraint
+ALTER TABLE business_card_entries
+ADD CONSTRAINT fk_user_name FOREIGN KEY (user_name)
+REFERENCES users (username)
+ON DELETE CASCADE;
+
+-- Create index for username lookups
+CREATE INDEX IF NOT EXISTS idx_users_username ON users (username);
 
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_business_card_user_name ON business_card_entries (user_name);

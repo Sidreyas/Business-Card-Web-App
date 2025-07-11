@@ -34,6 +34,66 @@ async function query(text, params) {
   }
 }
 
+// Initialize database tables if they don't exist
+async function initializeTables() {
+  try {
+    // Create users table
+    const createUsersTable = `
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(255) UNIQUE NOT NULL,
+        last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        total_cards INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+
+    // Create business_card_entries table
+    const createBusinessCardEntriesTable = `
+      CREATE TABLE IF NOT EXISTS business_card_entries (
+        id SERIAL PRIMARY KEY,
+        user_name VARCHAR(255) NOT NULL,
+        ocr_text TEXT NOT NULL,
+        ocr_method VARCHAR(50) NOT NULL,
+        parsing_method VARCHAR(50) NOT NULL,
+        name VARCHAR(255),
+        title VARCHAR(255),
+        company VARCHAR(255),
+        email VARCHAR(255),
+        phone VARCHAR(50),
+        website VARCHAR(255),
+        address TEXT,
+        user_comment TEXT,
+        ocr_success BOOLEAN DEFAULT TRUE,
+        parsing_success BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `;
+
+    // Create business_card_summary view
+    const createSummaryView = `
+      CREATE OR REPLACE VIEW business_card_summary AS
+      SELECT 
+        bce.*,
+        u.last_active as user_last_active,
+        u.total_cards as user_total_cards
+      FROM business_card_entries bce
+      LEFT JOIN users u ON bce.user_name = u.username
+      ORDER BY bce.created_at DESC;
+    `;
+
+    await query(createUsersTable);
+    await query(createBusinessCardEntriesTable);
+    await query(createSummaryView);
+    
+    console.log('Database tables initialized successfully');
+    return true;
+  } catch (error) {
+    console.error('Error initializing database tables:', error);
+    return false;
+  }
+}
+
 // Test database connection
 async function testConnection() {
   try {
@@ -153,14 +213,34 @@ async function checkUsernameExists(username) {
 }
 
 async function createUser(username) {
-  const queryText = `
-    INSERT INTO users (username)
-    VALUES ($1)
-    ON CONFLICT (username) DO UPDATE SET last_active = CURRENT_TIMESTAMP
-    RETURNING *
-  `;
-  const result = await query(queryText, [username]);
-  return result.rows[0];
+  try {
+    const queryText = `
+      INSERT INTO users (username)
+      VALUES ($1)
+      ON CONFLICT (username) DO UPDATE SET last_active = CURRENT_TIMESTAMP
+      RETURNING *
+    `;
+    const result = await query(queryText, [username]);
+    return result.rows[0];
+  } catch (error) {
+    // If users table doesn't exist, try to initialize it
+    if (error.code === '42P01') {
+      console.log('Users table not found, initializing database...');
+      const initialized = await initializeTables();
+      if (initialized) {
+        // Retry the user creation
+        const queryText = `
+          INSERT INTO users (username)
+          VALUES ($1)
+          ON CONFLICT (username) DO UPDATE SET last_active = CURRENT_TIMESTAMP
+          RETURNING *
+        `;
+        const result = await query(queryText, [username]);
+        return result.rows[0];
+      }
+    }
+    throw error;
+  }
 }
 
 async function updateUserActivity(username) {
@@ -220,5 +300,6 @@ module.exports = {
   createUser,
   updateUserActivity,
   getUserStats,
-  getGlobalStats
+  getGlobalStats,
+  initializeTables
 };
