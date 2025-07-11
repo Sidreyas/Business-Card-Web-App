@@ -21,7 +21,7 @@ const upload = multer({
 async function performOCR(imageBuffer) {
   try {
     const FormData = require('form-data');
-    const axios = require('axios');
+    const https = require('https');
     
     const form = new FormData();
     form.append('file', imageBuffer, {
@@ -35,20 +35,34 @@ async function performOCR(imageBuffer) {
     form.append('scale', 'true');
     form.append('OCREngine', '2');
 
-    const response = await axios.post('https://api.ocr.space/parse/image', form, {
-      headers: {
-        ...form.getHeaders()
-      },
-      timeout: 30000
+    // Promise wrapper for https request
+    const response = await new Promise((resolve, reject) => {
+      const req = https.request('https://api.ocr.space/parse/image', {
+        method: 'POST',
+        headers: form.getHeaders(),
+        timeout: 30000
+      }, (res) => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          try {
+            resolve(JSON.parse(data));
+          } catch (e) {
+            reject(new Error('Invalid JSON response'));
+          }
+        });
+      });
+
+      req.on('error', reject);
+      req.on('timeout', () => reject(new Error('Request timeout')));
+      form.pipe(req);
     });
 
-    const data = response.data;
-    
-    if (data.OCRExitCode !== 1) {
-      throw new Error(`OCR failed: ${data.ErrorMessage || 'Unknown error'}`);
+    if (response.OCRExitCode !== 1) {
+      throw new Error(`OCR failed: ${response.ErrorMessage || 'Unknown error'}`);
     }
 
-    const extractedText = data.ParsedResults?.[0]?.ParsedText || '';
+    const extractedText = response.ParsedResults?.[0]?.ParsedText || '';
     if (!extractedText.trim()) {
       throw new Error('No text extracted from image');
     }
