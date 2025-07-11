@@ -6,7 +6,6 @@
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "form-data": "^4.0.3",
     "multer": "^1.4.5-lts.1",
     "pg": "^8.11.3",
     "pg-pool": "^3.6.1"

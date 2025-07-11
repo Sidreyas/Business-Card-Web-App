@@ -20,26 +20,31 @@ const upload = multer({
 // OCR.space API integration
 async function performOCR(imageBuffer) {
   try {
-    const FormData = require('form-data');
     const https = require('https');
+    const querystring = require('querystring');
     
-    const form = new FormData();
-    form.append('file', imageBuffer, {
-      filename: 'business-card.jpg',
-      contentType: 'image/jpeg'
+    // Convert image buffer to base64
+    const base64Image = imageBuffer.toString('base64');
+    
+    // Prepare form data as URL-encoded string
+    const postData = querystring.stringify({
+      'base64Image': `data:image/jpeg;base64,${base64Image}`,
+      'apikey': process.env.OCR_SPACE_API_KEY || 'K87899142388957',
+      'language': 'eng',
+      'isOverlayRequired': 'false',
+      'detectOrientation': 'true',
+      'scale': 'true',
+      'OCREngine': '2'
     });
-    form.append('apikey', process.env.OCR_SPACE_API_KEY || 'K87899142388957'); // Free API key
-    form.append('language', 'eng');
-    form.append('isOverlayRequired', 'false');
-    form.append('detectOrientation', 'true');
-    form.append('scale', 'true');
-    form.append('OCREngine', '2');
 
     // Promise wrapper for https request
     const response = await new Promise((resolve, reject) => {
       const req = https.request('https://api.ocr.space/parse/image', {
         method: 'POST',
-        headers: form.getHeaders(),
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Length': Buffer.byteLength(postData)
+        },
         timeout: 30000
       }, (res) => {
         let data = '';
@@ -55,7 +60,8 @@ async function performOCR(imageBuffer) {
 
       req.on('error', reject);
       req.on('timeout', () => reject(new Error('Request timeout')));
-      form.pipe(req);
+      req.write(postData);
+      req.end();
     });
 
     if (response.OCRExitCode !== 1) {
