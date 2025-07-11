@@ -17,69 +17,105 @@ function CommentModal({ show, onClose, onSave, parsedData, userName }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-black/70 via-gray-900/80 to-black/70 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-gray-200">
-        <div className="px-6 py-5 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 rounded-t-2xl">
-          <h3 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-black bg-clip-text text-transparent">
-            Business Card Information Extracted
+    <div className="fixed inset-0 modal-overlay flex items-center justify-center z-50">
+      <div className="premium-card glow-box max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto border border-white/20">
+        <div className="px-6 py-5 glass-effect border-b border-white/10 rounded-t-xl">
+          <h3 className="text-2xl font-bold text-gradient-premium">
+            Business Card Extracted
           </h3>
-          <p className="text-sm text-gray-600 mt-2 font-medium">
-            Review the AI-extracted information and add any comments
+          <p className="text-sm text-gradient-accent mt-2 font-medium">
+            AI-powered OCR has processed your business card
           </p>
           {userName && (
-            <div className="mt-3 text-xs text-blue-600 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
-              Generated on {new Date().toLocaleDateString()} by {userName}
+            <div className="mt-3 text-xs btn-premium-dark px-3 py-2 rounded-xl inline-flex items-center space-x-2">
+              <span>📅</span>
+              <span>Generated on {new Date().toLocaleDateString()} by {userName}</span>
             </div>
           )}
         </div>
 
         <div className="px-6 py-5">
-          {/* Structured Data Preview */}
+          {/* Premium Structured Data Preview */}
           <div className="mb-6">
-            <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-              Extracted Information:
+            <h4 className="text-lg font-bold text-gradient-premium mb-4 flex items-center">
+              ✨ Extracted Contact Information
             </h4>
-            <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-5 rounded-xl space-y-3 border border-gray-200">
+            <div className="premium-card glow-box p-5 rounded-xl space-y-4 border border-white/10">
               {parsedData?.name && (
-                <div className="flex items-center">
-                  <span className="font-bold text-blue-700 w-24 flex items-center">Name:</span>
-                  <span className="text-gray-800 font-medium">{parsedData.name}</span>
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">👤</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-xs font-bold">NAME</span>
+                    <div className="text-white font-bold">{parsedData.name}</div>
+                  </div>
                 </div>
               )}
               {parsedData?.title && (
-                <div className="flex items-center">
-                  <span className="font-bold text-green-700 w-24 flex items-center">Title:</span>
-                  <span className="text-gray-800 font-medium">{parsedData.title}</span>
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">💼</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-xs font-bold">TITLE</span>
+                    <div className="text-white font-medium">{parsedData.title}</div>
+                  </div>
                 </div>
               )}
               {parsedData?.company && (
-                <div className="flex items-center">
-                  <span className="font-bold text-purple-700 w-24 flex items-center">Company:</span>
-                  <span className="text-gray-800 font-medium">{parsedData.company}</span>
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-purple-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">🏢</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-xs font-bold">COMPANY</span>
+                    <div className="text-white font-medium">{parsedData.company}</div>
+                  </div>
                 </div>
               )}
               {parsedData?.email && (
-                <div className="flex items-center">
-                  <span className="font-bold text-red-700 w-24 flex items-center">Email:</span>
-                  <span className="text-blue-600 font-medium">{parsedData.email}</span>
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-red-400 to-red-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">📧</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-xs font-bold">EMAIL</span>
+                    <div className="text-white font-medium">{parsedData.email}</div>
+                  </div>
                 </div>
               )}
               {parsedData?.phone && (
-                <div className="flex items-center">
-                  <span className="font-bold text-orange-700 w-24 flex items-center">Phone:</span>
-                  <span className="text-blue-600 font-medium">{parsedData.phone}</span>
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">📞</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-xs font-bold">PHONE</span>
+                    <div className="text-white font-medium">{parsedData.phone}</div>
+                  </div>
                 </div>
               )}
               {parsedData?.website && (
-                <div className="flex items-center">
-                  <span className="font-bold text-indigo-700 w-24 flex items-center">Website:</span>
-                  <span className="text-blue-600 font-medium">{parsedData.website}</span>
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">🌐</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-xs font-bold">WEBSITE</span>
+                    <div className="text-white font-medium">{parsedData.website}</div>
+                  </div>
                 </div>
               )}
               {parsedData?.address && (
-                <div className="flex items-start">
-                  <span className="font-bold text-gray-700 w-24 flex items-center">Address:</span>
-                  <span className="text-gray-800 font-medium">{parsedData.address}</span>
+                <div className="flex items-start space-x-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-gray-400 to-gray-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">📍</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-400 text-xs font-bold">ADDRESS</span>
+                    <div className="text-white font-medium">{parsedData.address}</div>
+                  </div>
                 </div>
               )}
 
@@ -88,8 +124,16 @@ function CommentModal({ show, onClose, onSave, parsedData, userName }) {
                 !parsedData?.company &&
                 !parsedData?.email &&
                 !parsedData?.phone) && (
-                <div className="bg-gradient-to-r from-orange-100 to-yellow-100 border-l-4 border-orange-400 p-3 rounded-lg">
-                  <span className="text-orange-700 font-medium">Limited structured data found. Raw text available in table.</span>
+                <div className="premium-card border border-orange-400/30 p-4 rounded-xl">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">⚠️</span>
+                    </div>
+                    <div>
+                      <span className="text-white font-bold">Limited data extracted</span>
+                      <div className="text-gray-300 text-sm">Raw OCR text is available below</div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
