@@ -48,34 +48,50 @@ async function testConnection() {
 
 // Business Card Entry Operations
 async function insertBusinessCardEntry(entry) {
-  const queryText = `
-    INSERT INTO business_card_entries (
-      user_name, ocr_text, ocr_method, parsing_method,
-      name, title, company, email, phone, website, address,
-      user_comment, ocr_success, parsing_success
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-    RETURNING *
-  `;
-  
-  const values = [
-    entry.user_name,
-    entry.ocr_text,
-    entry.ocr_method,
-    entry.parsing_method,
-    entry.name,
-    entry.title,
-    entry.company,
-    entry.email,
-    entry.phone,
-    entry.website,
-    entry.address,
-    entry.user_comment,
-    entry.ocr_success,
-    entry.parsing_success
-  ];
+  try {
+    // First, ensure the user exists in the users table
+    if (entry.user_name && entry.user_name !== 'Anonymous') {
+      await createUser(entry.user_name);
+    }
 
-  const result = await query(queryText, values);
-  return result.rows[0];
+    const queryText = `
+      INSERT INTO business_card_entries (
+        user_name, ocr_text, ocr_method, parsing_method,
+        name, title, company, email, phone, website, address,
+        user_comment, ocr_success, parsing_success
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      RETURNING *
+    `;
+    
+    const values = [
+      entry.user_name,
+      entry.ocr_text,
+      entry.ocr_method,
+      entry.parsing_method,
+      entry.name,
+      entry.title,
+      entry.company,
+      entry.email,
+      entry.phone,
+      entry.website,
+      entry.address,
+      entry.user_comment,
+      entry.ocr_success,
+      entry.parsing_success
+    ];
+
+    const result = await query(queryText, values);
+    
+    // Update user activity and card count
+    if (entry.user_name && entry.user_name !== 'Anonymous') {
+      await updateUserActivity(entry.user_name);
+    }
+    
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error inserting business card entry:', error);
+    throw error;
+  }
 }
 
 async function getBusinessCardEntries(userName, limit = 50, offset = 0) {

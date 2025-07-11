@@ -263,8 +263,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No image file provided' });
     }
 
-    // Get user info from request
-    const userName = req.body.userName || 'Anonymous';
+    // Get user info from request  
+    const userName = req.body.username || req.body.userName || 'Anonymous';
     const userComment = req.body.comment || '';
 
     // Perform OCR
