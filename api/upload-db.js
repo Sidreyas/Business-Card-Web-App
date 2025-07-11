@@ -302,10 +302,10 @@ export default async function handler(req, res) {
         parsing_success: true
       };
 
-      console.log('Saving to database...');
+      console.log('Saving to database with entry:', JSON.stringify(dbEntry, null, 2));
       const savedEntry = await insertBusinessCardEntry(dbEntry);
       
-      console.log('Successfully saved entry with ID:', savedEntry.id);
+      console.log('Successfully saved entry with ID:', savedEntry.id, 'at:', savedEntry.created_at);
 
       return res.status(200).json({
         success: true,
@@ -315,7 +315,8 @@ export default async function handler(req, res) {
         ocr_method: ocrResult.method,
         parsing_method: 'rule_based',
         saved_to_database: true,
-        created_at: savedEntry.created_at
+        created_at: savedEntry.created_at,
+        user_name: savedEntry.user_name
       });
 
     } catch (dbError) {
