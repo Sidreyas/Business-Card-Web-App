@@ -230,6 +230,8 @@ function App() {
       setUserName(savedUserName);
     } else {
       setUserName('Guest'); // Default to Guest
+      // Show username dialog for first-time users after a short delay
+      setTimeout(() => setShowUsernameDialog(true), 1000);
     }
   }, []);
 
@@ -430,14 +432,24 @@ function App() {
             <h1 className="text-lg font-bold">
               {activePage === 'capture' ? '📸 Card Scanner' : '📋 My Cards'}
             </h1>
-            <p className="text-sm text-gray-300">Welcome, {userName}!</p>
+            {userName && userName !== 'Guest' ? (
+              <p className="text-sm text-gray-300">Welcome, {userName}!</p>
+            ) : (
+              <p className="text-sm text-yellow-300">⚠️ Please set your username first</p>
+            )}
           </div>
-          <button
-            onClick={() => setShowUsernameDialog(true)}
-            className="text-xs bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg transition-colors"
-          >
-            Change User
-          </button>
+          {(!userName || userName === 'Guest') ? (
+            <button
+              onClick={() => setShowUsernameDialog(true)}
+              className="text-xs bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded-lg transition-colors font-medium"
+            >
+              Set Username
+            </button>
+          ) : (
+            <div className="text-xs text-gray-400">
+              Username: {userName}
+            </div>
+          )}
         </div>
       </div>
 
@@ -454,7 +466,7 @@ function App() {
       {/* Main Content Area with padding for bottom nav */}
       <div className="pb-20">
         {activePage === 'capture' && (
-          <CapturePageContent onOcrResult={handleOcrResult} />
+          <CapturePageContent onOcrResult={handleOcrResult} userName={userName} />
         )}
         
         {activePage === 'entries' && (
@@ -516,9 +528,26 @@ function App() {
 }
 
 // Capture Page Component
-function CapturePageContent({ onOcrResult }) {
+function CapturePageContent({ onOcrResult, userName }) {
+  const isUsernameSet = userName && userName !== 'Guest';
+  
   return (
     <div className="p-4 space-y-6">
+      {/* Username Warning */}
+      {!isUsernameSet && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <span className="text-amber-500 mr-3 text-xl">⚠️</span>
+            <div>
+              <p className="text-amber-800 font-medium">Username Required</p>
+              <p className="text-amber-700 text-sm mt-1">
+                Please set your username first to start scanning business cards.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section */}
       <div className="text-center py-8">
         <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
@@ -532,8 +561,15 @@ function CapturePageContent({ onOcrResult }) {
         </p>
       </div>
 
-      {/* Upload Form */}
-      <UploadForm onOcrResult={onOcrResult} />
+      {/* Upload Form - only show if username is set */}
+      {isUsernameSet ? (
+        <UploadForm onOcrResult={onOcrResult} />
+      ) : (
+        <div className="bg-gray-100 rounded-lg p-8 text-center">
+          <span className="text-4xl mb-4 block opacity-50">📱</span>
+          <p className="text-gray-500">Set your username to enable card scanning</p>
+        </div>
+      )}
       
       {/* Features */}
       <div className="grid grid-cols-2 gap-4 mt-8">

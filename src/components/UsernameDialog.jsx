@@ -58,6 +58,12 @@ function UsernameDialog({ isOpen, onClose, onSave, currentUsername }) {
   };
 
   const handleClose = () => {
+    // Don't allow closing if no username is set (first-time users)
+    if (!currentUsername || currentUsername === 'Guest') {
+      setError('Please set a username to continue using the app');
+      return;
+    }
+    
     setNewUsername(currentUsername || '');
     setError('');
     setLoading(false);
@@ -79,8 +85,26 @@ function UsernameDialog({ isOpen, onClose, onSave, currentUsername }) {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 transform transition-all">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Change Username</h3>
-          <p className="text-sm text-gray-600 mt-1">Enter a unique username to identify your cards</p>
+          <h3 className="text-lg font-semibold text-gray-900">
+            {currentUsername ? 'Change Username' : 'Create Your Username'}
+          </h3>
+          <div className="mt-2">
+            {!currentUsername ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <div className="flex items-start">
+                  <span className="text-amber-500 mr-2 text-lg">⚠️</span>
+                  <div>
+                    <p className="text-amber-800 font-medium text-sm">Choose carefully!</p>
+                    <p className="text-amber-700 text-xs mt-1">
+                      Username cannot be changed once set. Make it professional and memorable.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-600">Enter a unique username to identify your cards</p>
+            )}
+          </div>
         </div>
         
         <div className="px-6 py-4">
@@ -120,13 +144,15 @@ function UsernameDialog({ isOpen, onClose, onSave, currentUsername }) {
         </div>
         
         <div className="px-6 py-4 bg-gray-50 rounded-b-xl flex justify-end space-x-3">
-          <button
-            onClick={handleClose}
-            disabled={loading}
-            className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Cancel
-          </button>
+          {currentUsername && currentUsername !== 'Guest' && (
+            <button
+              onClick={handleClose}
+              disabled={loading}
+              className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Cancel
+            </button>
+          )}
           <button
             onClick={handleSave}
             disabled={loading || !newUsername.trim()}
@@ -138,7 +164,7 @@ function UsernameDialog({ isOpen, onClose, onSave, currentUsername }) {
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             )}
-            {loading ? 'Saving...' : 'Save'}
+            {loading ? 'Setting...' : (!currentUsername || currentUsername === 'Guest' ? 'Set Username' : 'Save')}
           </button>
         </div>
       </div>
