@@ -1,6 +1,6 @@
 import React from "react";
 
-function DataTable({ entries, onExportPDF, onClearData }) {
+function DataTable({ entries, onExportPDF, onClearData, onRefresh }) {
   if (entries.length === 0) {
     return (
       <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl shadow-2xl p-8 border border-gray-200">
@@ -26,6 +26,13 @@ function DataTable({ entries, onExportPDF, onClearData }) {
         </h2>
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
           <button
+            onClick={onRefresh}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 transform hover:scale-105 shadow-lg"
+            title="Refresh to see new entries from other users"
+          >
+            🔄 Refresh
+          </button>
+          <button
             onClick={onClearData}
             className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 transform hover:scale-105 shadow-lg"
           >
@@ -45,7 +52,7 @@ function DataTable({ entries, onExportPDF, onClearData }) {
           <thead className="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                Date & Time
+                Date & User
               </th>
               <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                 Contact Information
@@ -79,84 +86,87 @@ function DataTable({ entries, onExportPDF, onClearData }) {
                       </span>
                     )}
                     <div className="text-gray-900 font-bold">
-                      {new Date(entry.timestamp).toLocaleDateString()}
+                      {entry.created_at ? new Date(entry.created_at).toLocaleDateString() : 'Invalid Date'}
                     </div>
                     <div className="text-gray-600 text-xs font-medium">
-                      {new Date(entry.timestamp).toLocaleTimeString()}
+                      {entry.created_at ? new Date(entry.created_at).toLocaleTimeString() : ''}
+                    </div>
+                    <div className="text-blue-600 text-xs font-medium mt-1">
+                      👤 {entry.user_name || 'Anonymous'}
                     </div>
                   </div>
                 </td>
                 <td className="px-4 py-4 text-sm text-gray-900">
                   <div className="space-y-2">
-                    {entry.parsedData?.name && (
+                    {entry.name && (
                       <div className="flex items-center">
                         <span className="font-bold text-blue-700 mr-2">Name:</span> 
-                        <span className="text-gray-800 font-medium">{entry.parsedData.name}</span>
+                        <span className="text-gray-800 font-medium">{entry.name}</span>
                       </div>
                     )}
-                    {entry.parsedData?.title && (
+                    {entry.title && (
                       <div className="flex items-center">
                         <span className="font-bold text-green-700 mr-2">Title:</span> 
-                        <span className="text-gray-800 font-medium">{entry.parsedData.title}</span>
+                        <span className="text-gray-800 font-medium">{entry.title}</span>
                       </div>
                     )}
-                    {entry.parsedData?.company && (
+                    {entry.company && (
                       <div className="flex items-center">
                         <span className="font-bold text-purple-700 mr-2">Company:</span> 
-                        <span className="text-gray-800 font-medium">{entry.parsedData.company}</span>
+                        <span className="text-gray-800 font-medium">{entry.company}</span>
                       </div>
                     )}
-                    {entry.parsedData?.email && (
+                    {entry.email && (
                       <div className="flex items-center">
-                        <span className="font-bold text-red-700 mr-2">Email:</span>
-                        <a href={`mailto:${entry.parsedData.email}`} className="text-blue-600 hover:text-blue-800 font-medium hover:underline">
-                          {entry.parsedData.email}
+                        <span className="font-bold text-red-700 mr-2">Email:</span> 
+                        <a href={`mailto:${entry.email}`} className="text-blue-600 hover:text-blue-800 font-medium hover:underline">
+                          {entry.email}
                         </a>
                       </div>
                     )}
-                    {entry.parsedData?.phone && (
+                    {entry.phone && (
                       <div className="flex items-center">
                         <span className="font-bold text-orange-700 mr-2">Phone:</span> 
-                        <a href={`tel:${entry.parsedData.phone}`} className="text-blue-600 hover:text-blue-800 font-medium hover:underline">
-                          {entry.parsedData.phone}
+                        <a href={`tel:${entry.phone}`} className="text-blue-600 hover:text-blue-800 font-medium hover:underline">
+                          {entry.phone}
                         </a>
                       </div>
                     )}
-                    {entry.parsedData?.website && (
+                    {entry.website && (
                       <div className="flex items-center">
                         <span className="font-bold text-indigo-700 mr-2">Website:</span> 
-                        <a href={entry.parsedData.website.startsWith('http') ? entry.parsedData.website : `https://${entry.parsedData.website}`} 
+                        <a href={entry.website.startsWith('http') ? entry.website : `https://${entry.website}`} 
                            target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-medium hover:underline">
-                          {entry.parsedData.website}
+                          {entry.website}
                         </a>
                       </div>
                     )}
-                    {entry.parsedData?.address && (
+                    {entry.address && (
                       <div className="flex items-start">
-                        <span className="font-bold text-gray-700 mr-2">Address:</span> 
-                        <span className="text-gray-800 font-medium">{entry.parsedData.address}</span>
+                        <span className="font-bold text-teal-700 mr-2">Address:</span> 
+                        <span className="text-gray-800 font-medium">{entry.address}</span>
                       </div>
                     )}
                     
                     {/* Show raw text in a collapsible section */}
-                    <details className="mt-3">
-                      <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-800 font-medium flex items-center">
-                        View Raw OCR Text
-                      </summary>
-                      <div className="mt-2 p-3 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg text-xs text-gray-700 whitespace-pre-wrap border-l-4 border-gray-400">
-                        {entry.ocrText}
-                      </div>
-                    </details>
+                    {entry.ocr_text && (
+                      <details className="mt-3">
+                        <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-800 font-medium flex items-center">
+                          View Raw OCR Text
+                        </summary>
+                        <div className="mt-2 p-3 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg text-xs text-gray-700 whitespace-pre-wrap border-l-4 border-gray-400">
+                          {entry.ocr_text}
+                        </div>
+                      </details>
+                    )}
                   </div>
                 </td>
                 <td className="px-4 py-4 text-sm text-gray-900">
-                  <div className="max-w-xs">
-                    {entry.comment ? (
-                      <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-l-4 border-yellow-400 p-3 rounded-lg">
-                        <span className="text-gray-800 font-medium">{entry.comment}</span>
-                      </div>
+                  <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                    {entry.user_comment ? (
+                      <span className="text-gray-800 italic">"{entry.user_comment}"</span>
                     ) : (
-                      <span className="text-gray-400 italic">No comment</span>
+                      <span className="text-gray-500 italic">No comment</span>
                     )}
                   </div>
                 </td>

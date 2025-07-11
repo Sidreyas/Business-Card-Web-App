@@ -436,7 +436,7 @@ function App() {
             <UploadForm onOcrResult={handleOcrResult} />
           </div>
           <div>
-            <DataTable entries={entries} onExportPDF={handleExportPDF} onClearData={handleClearData} />
+            <DataTable entries={entries} onExportPDF={handleExportPDF} onClearData={handleClearData} onRefresh={refreshDataFromAPI} />
           </div>
         </div>
 
