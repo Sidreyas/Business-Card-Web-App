@@ -452,7 +452,7 @@ function App() {
       )}
 
       {/* Main Content Area */}
-      <div className={activePage === 'capture' ? '' : 'pb-20'}>
+      <div className={activePage === 'entries' ? 'pb-20' : ''}>
         {activePage === 'capture' && (
           <CapturePageContent onOcrResult={handleOcrResult} userName={userName} />
         )}
@@ -518,12 +518,45 @@ function App() {
 function CapturePageContent({ onOcrResult, userName }) {
   const isUsernameSet = userName && userName !== 'Guest';
   
+  // Check if camera is active or preview is showing by detecting DOM elements
+  const [hasExpandedContent, setHasExpandedContent] = useState(false);
+  
+  useEffect(() => {
+    const checkForExpandedContent = () => {
+      // Check for camera video or image preview
+      const hasCamera = document.querySelector('video');
+      const hasPreview = document.querySelector('form img[alt="Preview"]');
+      setHasExpandedContent(!!(hasCamera || hasPreview));
+    };
+    
+    // Check immediately and set up observer
+    checkForExpandedContent();
+    
+    const observer = new MutationObserver(checkForExpandedContent);
+    observer.observe(document.body, { 
+      childList: true, 
+      subtree: true, 
+      attributes: true 
+    });
+    
+    return () => observer.disconnect();
+  }, []);
+  
+  // Use conditional layout based on content
+  const layoutClass = hasExpandedContent 
+    ? "p-4 space-y-6 min-h-screen pb-24" // Scrollable when camera/preview active
+    : "fixed inset-0 pt-20 pb-20 overflow-hidden"; // Static layout otherwise
+  
+  const containerClass = hasExpandedContent 
+    ? "" // Normal flow for scrollable content
+    : "h-full flex flex-col"; // Fixed layout for static content
+  
   return (
-    <div className="fixed inset-0 pt-20 pb-20 overflow-hidden">
-      <div className="h-full flex flex-col p-4">
+    <div className={layoutClass}>
+      <div className={containerClass}>
         {/* Premium Username Warning */}
         {!isUsernameSet && (
-          <div className="premium-card glow-box rounded-xl p-4 border border-white/10 mb-4 flex-shrink-0">
+          <div className={`premium-card glow-box rounded-xl p-4 border border-white/10 mb-4 ${hasExpandedContent ? '' : 'flex-shrink-0'}`}>
             <div className="flex items-center">
               <span className="text-yellow-400 mr-3 text-xl">⚠️</span>
               <div>
@@ -537,7 +570,7 @@ function CapturePageContent({ onOcrResult, userName }) {
         )}
 
         {/* Premium Hero Section */}
-        <div className="text-center py-4 mb-4 flex-shrink-0">
+        <div className={`text-center py-4 mb-4 ${hasExpandedContent ? '' : 'flex-shrink-0'}`}>
           <div className="w-16 h-16 mx-auto mb-3 premium-card rounded-full flex items-center justify-center glow-box">
             <span className="text-2xl">🃏</span>
           </div>
@@ -550,7 +583,7 @@ function CapturePageContent({ onOcrResult, userName }) {
         </div>
 
         {/* Premium Features */}
-        <div className="grid grid-cols-2 gap-3 mb-4 flex-shrink-0">
+        <div className={`grid grid-cols-2 gap-3 mb-4 ${hasExpandedContent ? '' : 'flex-shrink-0'}`}>
           <div className="premium-card glow-box rounded-xl p-3 border border-white/10">
             <div className="text-center">
               <span className="text-xl mb-1 block">⚡</span>
@@ -567,11 +600,11 @@ function CapturePageContent({ onOcrResult, userName }) {
           </div>
         </div>
 
-        {/* Spacer to push upload form towards bottom */}
-        <div className="flex-1"></div>
+        {/* Spacer to push upload form towards bottom - only in static mode */}
+        {!hasExpandedContent && <div className="flex-1"></div>}
 
         {/* Upload Form positioned at bottom - only show if username is set */}
-        <div className="flex-shrink-0">
+        <div className={hasExpandedContent ? 'mt-8' : 'flex-shrink-0'}>
           {isUsernameSet ? (
             <UploadForm onOcrResult={onOcrResult} />
           ) : (

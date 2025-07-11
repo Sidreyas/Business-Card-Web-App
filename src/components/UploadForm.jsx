@@ -10,7 +10,6 @@ function UploadForm({ onOcrResult }) {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
-  // Get username from localStorage
   const getUsername = () => {
     return localStorage.getItem('businessCardOcrUserName') || 'Guest';
   };
@@ -34,10 +33,9 @@ function UploadForm({ onOcrResult }) {
 
   const startCamera = async () => {
     try {
-      // First try with back camera (environment)
       let constraints = {
         video: { 
-          facingMode: 'environment', // Use back camera on mobile
+          facingMode: 'environment',
           width: { ideal: 1280 },
           height: { ideal: 720 }
         }
@@ -47,20 +45,8 @@ function UploadForm({ onOcrResult }) {
       try {
         mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
       } catch (envError) {
-        console.warn('Back camera not available, trying front camera:', envError);
-        // Fallback to front camera
         constraints.video.facingMode = 'user';
-        try {
-          mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-        } catch (userError) {
-          console.warn('Front camera failed, trying any camera:', userError);
-          // Fallback to any available camera
-          constraints.video = { 
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          };
-          mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-        }
+        mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
       }
       
       setStream(mediaStream);
@@ -68,7 +54,7 @@ function UploadForm({ onOcrResult }) {
       
     } catch (err) {
       console.error('Error accessing camera:', err);
-      alert('Error accessing camera. Please make sure you have granted camera permissions and your browser supports camera access.');
+      alert('Error accessing camera. Please check permissions.');
     }
   };
 
@@ -86,28 +72,22 @@ function UploadForm({ onOcrResult }) {
       const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
       
-      // Set canvas dimensions for high quality capture
       const width = video.videoWidth || 1280;
       const height = video.videoHeight || 720;
       canvas.width = width;
       canvas.height = height;
       
-      // Draw video frame to canvas with better quality
       context.drawImage(video, 0, 0, width, height);
       
-      // Convert canvas to blob with higher quality
       canvas.toBlob((blob) => {
         if (blob) {
           const file = new File([blob], 'captured-image.jpg', { type: 'image/jpeg' });
-          console.log('Captured image size:', blob.size, 'bytes');
           setImageFile(file);
           stopCamera();
         } else {
           alert('Failed to capture image. Please try again.');
         }
-      }, 'image/jpeg', 0.95); // Higher quality (0.95 instead of 0.8)
-    } else {
-      alert('Camera not ready. Please try again.');
+      }, 'image/jpeg', 0.95);
     }
   };
 
@@ -130,7 +110,6 @@ function UploadForm({ onOcrResult }) {
       });
       
       if (res.data && res.data.success) {
-        // Always pass the data, even if parsing failed
         const rawText = res.data.text || '';
         const parsedData = res.data.parsed_data || null;
         const responseUsername = res.data.username || getUsername();
@@ -139,7 +118,6 @@ function UploadForm({ onOcrResult }) {
         onOcrResult(rawText, parsedData, responseUsername, responseDate);
         setImage(null);
         setPreview(null);
-        // Reset file input
         const fileInput = document.getElementById('file-input');
         if (fileInput) fileInput.value = '';
       } else {
@@ -147,24 +125,12 @@ function UploadForm({ onOcrResult }) {
       }
     } catch (err) {
       console.error('Upload error:', err);
-      let errorMessage = "Error uploading image or extracting text.";
-      
-      if (err.response) {
-        // Server responded with error
-        const serverError = err.response.data?.error || err.response.statusText;
-        errorMessage = `Server error: ${serverError}`;
-      } else if (err.request) {
-        // Network error
-        errorMessage = "Network error. Make sure the Flask server is running on port 5000.";
-      }
-      
-      alert(errorMessage);
+      alert('Error uploading image or extracting text.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Cleanup camera stream when component unmounts
   useEffect(() => {
     return () => {
       if (stream) {
@@ -173,7 +139,6 @@ function UploadForm({ onOcrResult }) {
     };
   }, [stream]);
 
-  // Set video source when stream is available
   useEffect(() => {
     if (stream && videoRef.current && showCamera) {
       videoRef.current.srcObject = stream;
@@ -182,75 +147,70 @@ function UploadForm({ onOcrResult }) {
   }, [stream, showCamera]);
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl shadow-2xl border border-gray-200">
-      <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-gray-800 to-black bg-clip-text text-transparent">
-        Capture Business Card
-      </h2>
+    <div className="space-y-6">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold text-gradient-premium mb-2">
+          AI Card Scanner
+        </h2>
+        <p className="text-sm text-gradient-accent">
+          Professional OCR technology for instant contact extraction
+        </p>
+      </div>
       
-      {/* Camera/Upload Toggle Buttons */}
-      <div className="flex space-x-4 mb-6">
-        <button
-          onClick={startCamera}
-          disabled={loading || showCamera}
-          className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 ${
-            showCamera
-              ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg'
-              : 'bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-700 hover:to-gray-900 shadow-lg'
-          }`}
-        >
-          📷 {showCamera ? 'Camera Active' : 'Use Camera'}
-        </button>
+      <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => document.getElementById('file-input').click()}
           disabled={loading || showCamera}
-          className="flex-1 py-3 px-4 rounded-lg font-medium bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-500 hover:to-gray-600 transition-all duration-300 transform hover:scale-105 shadow-lg"
+          className="btn-premium-dark py-4 px-4 rounded-xl font-bold glow-box"
         >
-          📁 Upload File
+          <div className="flex flex-col items-center space-y-1">
+            <span className="text-lg">📁</span>
+            <span className="text-xs">Upload File</span>
+          </div>
+        </button>
+        <button
+          onClick={startCamera}
+          disabled={loading || showCamera}
+          className="btn-premium py-4 px-4 rounded-xl font-bold glow-box"
+        >
+          <div className="flex flex-col items-center space-y-1">
+            <span className="text-lg">📷</span>
+            <span className="text-xs">Use Camera</span>
+          </div>
         </button>
       </div>
 
-      {/* Camera View */}
       {showCamera && (
-        <div className="mb-6">
-          <div className="relative bg-gradient-to-br from-gray-900 to-black rounded-xl overflow-hidden shadow-inner border border-gray-300">
+        <div className="premium-card glow-box rounded-xl p-4 border border-white/20">
+          <div className="relative bg-gradient-to-br from-black to-gray-900 rounded-xl overflow-hidden">
             <video
               ref={videoRef}
               autoPlay
               playsInline
               muted
               className="w-full h-64 object-cover"
-              onLoadedMetadata={() => {
-                console.log('Video metadata loaded');
-                if (videoRef.current) {
-                  videoRef.current.play().catch(console.error);
-                }
-              }}
-              onPlaying={() => console.log('Video is playing')}
-              onError={(e) => console.error('Video error:', e)}
             />
             <div className="absolute inset-0 border-2 border-dashed border-white opacity-30 m-4 rounded-lg"></div>
           </div>
           <div className="flex space-x-4 mt-4">
             <button
-              onClick={captureImage}
-              className="flex-1 py-3 px-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-500 hover:to-green-600 transition-all duration-300 transform hover:scale-105 shadow-lg font-medium"
-            >
-              📸 Capture
-            </button>
-            <button
               onClick={stopCamera}
-              className="flex-1 py-3 px-4 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg hover:from-red-500 hover:to-red-600 transition-all duration-300 transform hover:scale-105 shadow-lg font-medium"
+              className="flex-1 py-3 px-4 bg-gradient-to-r from-gray-600 to-gray-800 text-white rounded-lg hover:from-gray-500 hover:to-gray-700 transition-all duration-300 transform hover:scale-105 shadow-lg font-medium"
             >
               Cancel
+            </button>
+            <button
+              onClick={captureImage}
+              className="flex-1 py-3 px-4 bg-gradient-to-r from-gray-700 to-gray-900 text-white rounded-lg hover:from-gray-600 hover:to-gray-800 transition-all duration-300 transform hover:scale-105 shadow-lg font-medium"
+            >
+              📸 Capture
             </button>
           </div>
         </div>
       )}
 
-      {/* Hidden Canvas for Image Capture */}
       <canvas ref={canvasRef} style={{ display: 'none' }}></canvas>
       
-      {/* Hidden File Input */}
       <input
         id="file-input"
         type="file"
@@ -260,20 +220,18 @@ function UploadForm({ onOcrResult }) {
         disabled={loading}
       />
 
-      {/* Preview and Upload Form */}
       {preview && (
         <form onSubmit={handleUpload} className="space-y-6">
           <div>
-            <label className="block text-lg font-semibold text-gray-800 mb-3">
+            <label className="block text-lg font-semibold text-gradient-premium mb-3">
               Preview
             </label>
             <div className="relative">
               <img
                 src={preview}
                 alt="Preview"
-                className="w-full h-48 object-contain border-2 border-gray-300 rounded-xl bg-gradient-to-br from-gray-50 to-white shadow-inner"
+                className="w-full h-48 object-contain border-2 border-white/20 rounded-xl bg-gradient-to-br from-gray-800 to-gray-900 shadow-inner"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent rounded-xl pointer-events-none"></div>
             </div>
           </div>
 
@@ -286,30 +244,16 @@ function UploadForm({ onOcrResult }) {
                 const fileInput = document.getElementById('file-input');
                 if (fileInput) fileInput.value = '';
               }}
-              className="flex-1 py-3 px-4 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg hover:from-gray-400 hover:to-gray-500 transition-all duration-300 transform hover:scale-105 shadow-lg font-medium"
+              className="flex-1 py-3 px-4 bg-gradient-to-r from-gray-600 to-gray-800 text-white rounded-lg hover:from-gray-500 hover:to-gray-700 transition-all duration-300 transform hover:scale-105 shadow-lg font-medium"
             >
               Clear
             </button>
             <button
               type="submit"
               disabled={!image || loading}
-              className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 shadow-lg ${
-                !image || loading
-                  ? 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-700 hover:to-gray-900'
-              }`}
+              className="flex-1 py-3 px-4 bg-gradient-to-r from-gray-700 to-gray-900 text-white rounded-lg hover:from-gray-600 hover:to-gray-800 transition-all duration-300 transform hover:scale-105 shadow-lg font-medium glow-box"
             >
-              {loading ? (
-                <span className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Processing with AI...
-                </span>
-              ) : (
-                'Extract Text with AI'
-              )}
+              {loading ? 'Processing...' : '🚀 Extract Text with AI'}
             </button>
           </div>
         </form>
