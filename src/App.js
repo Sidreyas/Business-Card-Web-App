@@ -451,8 +451,8 @@ function App() {
         </div>
       )}
 
-      {/* Main Content Area with padding for bottom nav */}
-      <div className="pb-20">
+      {/* Main Content Area */}
+      <div className={activePage === 'capture' ? '' : 'pb-20'}>
         {activePage === 'capture' && (
           <CapturePageContent onOcrResult={handleOcrResult} userName={userName} />
         )}
@@ -519,66 +519,68 @@ function CapturePageContent({ onOcrResult, userName }) {
   const isUsernameSet = userName && userName !== 'Guest';
   
   return (
-    <div className="p-4 space-y-6 min-h-screen flex flex-col pb-24">
-      {/* Premium Username Warning */}
-      {!isUsernameSet && (
-        <div className="premium-card glow-box rounded-xl p-4 border border-white/10">
-          <div className="flex items-center">
-            <span className="text-yellow-400 mr-3 text-xl">⚠️</span>
-            <div>
-              <p className="text-gradient-premium font-medium">Username Required</p>
-              <p className="text-gradient-accent text-sm mt-1">
-                Please set your username first to start scanning business cards.
-              </p>
+    <div className="fixed inset-0 pt-20 pb-20 overflow-hidden">
+      <div className="h-full flex flex-col p-4">
+        {/* Premium Username Warning */}
+        {!isUsernameSet && (
+          <div className="premium-card glow-box rounded-xl p-4 border border-white/10 mb-4 flex-shrink-0">
+            <div className="flex items-center">
+              <span className="text-yellow-400 mr-3 text-xl">⚠️</span>
+              <div>
+                <p className="text-gradient-premium font-medium">Username Required</p>
+                <p className="text-gradient-accent text-sm mt-1">
+                  Please set your username first to start scanning business cards.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Premium Hero Section */}
+        <div className="text-center py-4 mb-4 flex-shrink-0">
+          <div className="w-16 h-16 mx-auto mb-3 premium-card rounded-full flex items-center justify-center glow-box">
+            <span className="text-2xl">🃏</span>
+          </div>
+          <h2 className="text-xl font-bold text-gradient-premium mb-2">
+            AI Card Scanner Pro
+          </h2>
+          <p className="text-gradient-accent text-xs">
+            Upload or capture a business card to extract contact information instantly
+          </p>
+        </div>
+
+        {/* Premium Features */}
+        <div className="grid grid-cols-2 gap-3 mb-4 flex-shrink-0">
+          <div className="premium-card glow-box rounded-xl p-3 border border-white/10">
+            <div className="text-center">
+              <span className="text-xl mb-1 block">⚡</span>
+              <h3 className="font-semibold text-xs text-gradient-premium">Fast OCR</h3>
+              <p className="text-xs text-gradient-accent mt-1">Instant text extraction</p>
+            </div>
+          </div>
+          <div className="premium-card glow-box rounded-xl p-3 border border-white/10">
+            <div className="text-center">
+              <span className="text-xl mb-1 block">☁️</span>
+              <h3 className="font-semibold text-xs text-gradient-premium">Cloud Sync</h3>
+              <p className="text-xs text-gradient-accent mt-1">Access anywhere</p>
             </div>
           </div>
         </div>
-      )}
 
-      {/* Premium Hero Section */}
-      <div className="text-center py-8">
-        <div className="w-20 h-20 mx-auto mb-4 premium-card rounded-full flex items-center justify-center glow-box">
-          <span className="text-3xl">🃏</span>
+        {/* Spacer to push upload form towards bottom */}
+        <div className="flex-1"></div>
+
+        {/* Upload Form positioned at bottom - only show if username is set */}
+        <div className="flex-shrink-0">
+          {isUsernameSet ? (
+            <UploadForm onOcrResult={onOcrResult} />
+          ) : (
+            <div className="premium-card glow-box rounded-xl p-6 text-center border border-white/10">
+              <span className="text-3xl mb-3 block opacity-50">📱</span>
+              <p className="text-gradient-accent text-sm">Set your username to enable card scanning</p>
+            </div>
+          )}
         </div>
-        <h2 className="text-2xl font-bold text-gradient-premium mb-2">
-          AI Card Scanner Pro
-        </h2>
-        <p className="text-gradient-accent text-sm">
-          Upload or capture a business card to extract contact information instantly
-        </p>
-      </div>
-
-      {/* Premium Features */}
-      <div className="grid grid-cols-2 gap-4 mb-16">
-        <div className="premium-card glow-box rounded-xl p-4 border border-white/10">
-          <div className="text-center">
-            <span className="text-2xl mb-2 block">⚡</span>
-            <h3 className="font-semibold text-sm text-gradient-premium">Fast OCR</h3>
-            <p className="text-xs text-gradient-accent mt-1">Instant text extraction</p>
-          </div>
-        </div>
-        <div className="premium-card glow-box rounded-xl p-4 border border-white/10">
-          <div className="text-center">
-            <span className="text-2xl mb-2 block">☁️</span>
-            <h3 className="font-semibold text-sm text-gradient-premium">Cloud Sync</h3>
-            <p className="text-xs text-gradient-accent mt-1">Access anywhere</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Spacer to push upload form towards bottom */}
-      <div className="flex-1"></div>
-
-      {/* Upload Form positioned near bottom - only show if username is set */}
-      <div className="mt-auto pt-8 pb-8">
-        {isUsernameSet ? (
-          <UploadForm onOcrResult={onOcrResult} />
-        ) : (
-          <div className="premium-card glow-box rounded-xl p-8 text-center border border-white/10">
-            <span className="text-4xl mb-4 block opacity-50">📱</span>
-            <p className="text-gradient-accent">Set your username to enable card scanning</p>
-          </div>
-        )}
       </div>
     </div>
   );
