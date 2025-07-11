@@ -1,18 +1,15 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "build"
-      }
+  "functions": {
+    "api/upload-db.js": {
+      "maxDuration": 60
     },
-    {
-      "src": "api/**/*.js",
-      "use": "@vercel/node"
+    "api/entries.js": {
+      "maxDuration": 30
+    },
+    "api/init-db.js": {
+      "maxDuration": 30
     }
-  ],
+  },
   "routes": [
     {
       "src": "/api/upload",
@@ -25,21 +22,6 @@
     {
       "src": "/api/init-db",
       "dest": "/api/init-db.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "functions": {
-    "api/upload-db.js": {
-      "maxDuration": 60
-    },
-    "api/init-db.js": {
-      "maxDuration": 30
-    }
-  }
+  ]
 }
