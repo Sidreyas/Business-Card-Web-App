@@ -84,3 +84,8 @@ test_*.py
 *test*.py
 debug_*.jpg
 debug_*.png
+
+# Temporary repositories and duplicates
+temp_repo/
+*_temp/
+*_backup/
