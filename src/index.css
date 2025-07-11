@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom mobile optimizations */
+@media (max-width: 768px) {
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  /* Prevent viewport zoom on inputs */
+  input[type="text"], input[type="email"], input[type="tel"], input[type="url"], textarea {
+    font-size: 16px;
+  }
+  
+  /* Optimize touch targets */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improve readability on mobile */
+  .mobile-text {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  
+  /* Mobile-specific layouts */
+  .mobile-stack {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  /* Optimize spacing for mobile */
+  .mobile-spacing {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+}
+
+/* Loading animation */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Smooth transitions */
+.smooth-transition {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Focus styles for accessibility */
+*:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Improve mobile camera handling */
+@media (max-width: 768px) {
+  video {
+    max-height: 50vh;
+    object-fit: cover;
+  }
+  
+  .camera-container {
+    position: relative;
+    width: 100%;
+    height: auto;
+  }
+}
