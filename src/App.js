@@ -173,6 +173,7 @@ function App() {
   const [userName, setUserName] = useState('');
   const [currentProcessingDate, setCurrentProcessingDate] = useState('');
   const [notification, setNotification] = useState('');
+  const [activePage, setActivePage] = useState('capture'); // 'capture' or 'entries'
 
   // Load entries from API on component mount
   useEffect(() => {
@@ -389,65 +390,173 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="container mx-auto px-4 py-4 sm:py-8 max-w-7xl">
-        {/* Header */}
-        <div className="text-center mb-4 sm:mb-8">
-          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2">
-            Business Card OCR
-          </h1>
-          <p className="text-sm sm:text-lg text-gray-600">
-            Extract contact information from business cards with AI
-          </p>
-        </div>
-
-        {/* User Info Bar */}
-        <div className="mb-4 sm:mb-8 bg-gradient-to-r from-gray-800 to-black rounded-lg p-3 sm:p-4 shadow-lg">
-          <div className="flex justify-between items-center text-white">
-            <div className="flex items-center space-x-3">
-              <span className="text-sm sm:text-base font-medium">Welcome, {userName}!</span>
-            </div>
-            <button
-              onClick={() => {
-                const newName = prompt('Enter your name:', userName);
-                if (newName && newName.trim()) {
-                  setUserName(newName.trim());
-                }
-              }}
-              className="text-xs sm:text-sm text-gray-300 hover:text-white transition-colors"
-            >
-              Change User
-            </button>
-          </div>
-        </div>
-
-        {/* Notification */}
-        {notification && (
-          <div className="mb-4 sm:mb-8 bg-green-50 border border-green-200 rounded-lg p-3 sm:p-4 shadow-sm">
-            <div className="flex items-center">
-              <span className="text-green-600 mr-2">✓</span>
-              <span className="text-green-800 text-sm sm:text-base">{notification}</span>
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      {/* Mobile Header */}
+      <div className="bg-gradient-to-r from-gray-800 to-black text-white p-4 shadow-lg">
+        <div className="flex justify-between items-center">
           <div>
-            <UploadForm onOcrResult={handleOcrResult} />
+            <h1 className="text-lg font-bold">
+              {activePage === 'capture' ? '📸 Card Scanner' : '📋 My Cards'}
+            </h1>
+            <p className="text-sm text-gray-300">Welcome, {userName}!</p>
           </div>
-          <div>
-            <DataTable entries={entries} onExportPDF={handleExportPDF} onClearData={handleClearData} onRefresh={refreshDataFromAPI} />
-          </div>
+          <button
+            onClick={() => {
+              const newName = prompt('Enter your name:', userName);
+              if (newName && newName.trim()) {
+                setUserName(newName.trim());
+              }
+            }}
+            className="text-xs bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg transition-colors"
+          >
+            Change User
+          </button>
         </div>
-
-        <CommentModal 
-          show={showModal}
-          onClose={() => setShowModal(false)}
-          onSave={handleSaveComment}
-          parsedData={currentParsedData}
-          userName={userName}
-        />
       </div>
+
+      {/* Notification */}
+      {notification && (
+        <div className="bg-green-50 border-b border-green-200 p-3">
+          <div className="flex items-center justify-center">
+            <span className="text-green-600 mr-2">✓</span>
+            <span className="text-green-800 text-sm">{notification}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content Area with padding for bottom nav */}
+      <div className="pb-20">
+        {activePage === 'capture' && (
+          <CapturePageContent onOcrResult={handleOcrResult} />
+        )}
+        
+        {activePage === 'entries' && (
+          <EntriesPageContent 
+            entries={entries} 
+            onExportPDF={handleExportPDF} 
+            onClearData={handleClearData}
+          />
+        )}
+      </div>
+
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
+        <div className="flex">
+          <button
+            onClick={() => setActivePage('capture')}
+            className={`flex-1 flex flex-col items-center py-3 px-4 transition-colors ${
+              activePage === 'capture' 
+                ? 'text-blue-600 bg-blue-50' 
+                : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+            }`}
+          >
+            <span className="text-xl mb-1">📸</span>
+            <span className="text-xs font-medium">Capture</span>
+          </button>
+          
+          <button
+            onClick={() => setActivePage('entries')}
+            className={`flex-1 flex flex-col items-center py-3 px-4 transition-colors ${
+              activePage === 'entries' 
+                ? 'text-blue-600 bg-blue-50' 
+                : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+            }`}
+          >
+            <span className="text-xl mb-1">📋</span>
+            <span className="text-xs font-medium">
+              Cards ({entries.length})
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <CommentModal 
+        show={showModal}
+        onClose={() => setShowModal(false)}
+        onSave={handleSaveComment}
+        parsedData={currentParsedData}
+        userName={userName}
+      />
+    </div>
+  );
+}
+
+// Capture Page Component
+function CapturePageContent({ onOcrResult }) {
+  return (
+    <div className="p-4 space-y-6">
+      {/* Hero Section */}
+      <div className="text-center py-8">
+        <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+          <span className="text-3xl">🃏</span>
+        </div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">
+          Scan Business Cards
+        </h2>
+        <p className="text-gray-600 text-sm">
+          Upload or capture a business card to extract contact information instantly
+        </p>
+      </div>
+
+      {/* Upload Form */}
+      <UploadForm onOcrResult={onOcrResult} />
+      
+      {/* Features */}
+      <div className="grid grid-cols-2 gap-4 mt-8">
+        <div className="bg-white rounded-lg p-4 shadow-sm border">
+          <div className="text-center">
+            <span className="text-2xl mb-2 block">⚡</span>
+            <h3 className="font-semibold text-sm text-gray-800">Fast OCR</h3>
+            <p className="text-xs text-gray-600 mt-1">Instant text extraction</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg p-4 shadow-sm border">
+          <div className="text-center">
+            <span className="text-2xl mb-2 block">☁️</span>
+            <h3 className="font-semibold text-sm text-gray-800">Cloud Sync</h3>
+            <p className="text-xs text-gray-600 mt-1">Access from any device</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Entries Page Component  
+function EntriesPageContent({ entries, onExportPDF, onClearData }) {
+  return (
+    <div className="p-4">
+      {/* Stats Card */}
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4 text-white mb-6">
+        <h3 className="text-lg font-bold mb-2">Your Business Cards</h3>
+        <div className="flex justify-between items-center">
+          <div>
+            <p className="text-2xl font-bold">{entries.length}</p>
+            <p className="text-sm opacity-90">Total Cards</p>
+          </div>
+          <div className="flex space-x-2">
+            {entries.length > 0 && (
+              <>
+                <button
+                  onClick={onExportPDF}
+                  className="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+                >
+                  📄 Export
+                </button>
+                <button
+                  onClick={onClearData}
+                  className="bg-red-500 bg-opacity-80 hover:bg-opacity-100 px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+                >
+                  🗑️ Clear
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Data Table */}
+      <DataTable entries={entries} onExportPDF={onExportPDF} onClearData={onClearData} />
     </div>
   );
 }
