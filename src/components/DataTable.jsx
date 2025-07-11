@@ -1,6 +1,6 @@
 import React from "react";
 
-function DataTable({ entries, onExportPDF, onClearData }) {
+function DataTable({ entries, onExportPDF }) {
   if (entries.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">

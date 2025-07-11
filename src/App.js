@@ -390,19 +390,6 @@ function App() {
     doc.save(`business-cards-${new Date().getTime()}.pdf`);
   };
 
-  const handleClearData = () => {
-    const confirmClear = window.confirm(
-      'Are you sure you want to clear all saved business card data? This action cannot be undone.'
-    );
-    
-    if (confirmClear) {
-      setEntries([]);
-      localStorage.removeItem('businessCardOcrEntries');
-      setNotification('All data has been cleared successfully.');
-      setTimeout(() => setNotification(''), 3000);
-    }
-  };
-
   // Function to refresh data from API
   const refreshDataFromAPI = async () => {
     try {
@@ -438,17 +425,13 @@ function App() {
               <p className="text-sm text-yellow-300">⚠️ Please set your username first</p>
             )}
           </div>
-          {(!userName || userName === 'Guest') ? (
+          {(!userName || userName === 'Guest') && (
             <button
               onClick={() => setShowUsernameDialog(true)}
               className="text-xs bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded-lg transition-colors font-medium"
             >
               Set Username
             </button>
-          ) : (
-            <div className="text-xs text-gray-400">
-              Username: {userName}
-            </div>
           )}
         </div>
       </div>
@@ -472,8 +455,7 @@ function App() {
         {activePage === 'entries' && (
           <EntriesPageContent 
             entries={entries} 
-            onExportPDF={handleExportPDF} 
-            onClearData={handleClearData}
+            onExportPDF={handleExportPDF}
           />
         )}
       </div>
@@ -593,7 +575,7 @@ function CapturePageContent({ onOcrResult, userName }) {
 }
 
 // Entries Page Component  
-function EntriesPageContent({ entries, onExportPDF, onClearData }) {
+function EntriesPageContent({ entries, onExportPDF }) {
   return (
     <div className="p-4">
       {/* Stats Card */}
@@ -606,27 +588,19 @@ function EntriesPageContent({ entries, onExportPDF, onClearData }) {
           </div>
           <div className="flex space-x-2">
             {entries.length > 0 && (
-              <>
-                <button
-                  onClick={onExportPDF}
-                  className="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-2 rounded-lg text-xs font-medium transition-colors"
-                >
-                  📄 Export
-                </button>
-                <button
-                  onClick={onClearData}
-                  className="bg-red-500 bg-opacity-80 hover:bg-opacity-100 px-3 py-2 rounded-lg text-xs font-medium transition-colors"
-                >
-                  🗑️ Clear
-                </button>
-              </>
+              <button
+                onClick={onExportPDF}
+                className="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+              >
+                📄 Export PDF
+              </button>
             )}
           </div>
         </div>
       </div>
 
       {/* Data Table */}
-      <DataTable entries={entries} onExportPDF={onExportPDF} onClearData={onClearData} />
+      <DataTable entries={entries} onExportPDF={onExportPDF} />
     </div>
   );
 }
