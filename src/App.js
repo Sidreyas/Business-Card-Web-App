@@ -519,7 +519,7 @@ function CapturePageContent({ onOcrResult, userName }) {
   const isUsernameSet = userName && userName !== 'Guest';
   
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-6 min-h-screen flex flex-col pb-24">
       {/* Premium Username Warning */}
       {!isUsernameSet && (
         <div className="premium-card glow-box rounded-xl p-4 border border-white/10">
@@ -549,7 +549,7 @@ function CapturePageContent({ onOcrResult, userName }) {
       </div>
 
       {/* Premium Features */}
-      <div className="grid grid-cols-2 gap-4 mb-8">
+      <div className="grid grid-cols-2 gap-4 mb-16">
         <div className="premium-card glow-box rounded-xl p-4 border border-white/10">
           <div className="text-center">
             <span className="text-2xl mb-2 block">⚡</span>
@@ -566,15 +566,20 @@ function CapturePageContent({ onOcrResult, userName }) {
         </div>
       </div>
 
-      {/* Upload Form - only show if username is set */}
-      {isUsernameSet ? (
-        <UploadForm onOcrResult={onOcrResult} />
-      ) : (
-        <div className="premium-card glow-box rounded-xl p-8 text-center border border-white/10">
-          <span className="text-4xl mb-4 block opacity-50">📱</span>
-          <p className="text-gradient-accent">Set your username to enable card scanning</p>
-        </div>
-      )}
+      {/* Spacer to push upload form towards bottom */}
+      <div className="flex-1"></div>
+
+      {/* Upload Form positioned near bottom - only show if username is set */}
+      <div className="mt-auto pt-8 pb-8">
+        {isUsernameSet ? (
+          <UploadForm onOcrResult={onOcrResult} />
+        ) : (
+          <div className="premium-card glow-box rounded-xl p-8 text-center border border-white/10">
+            <span className="text-4xl mb-4 block opacity-50">📱</span>
+            <p className="text-gradient-accent">Set your username to enable card scanning</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
