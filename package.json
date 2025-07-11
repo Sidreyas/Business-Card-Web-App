@@ -1,0 +1,14 @@
+{
+  "name": "business-card-ocr",
+  "version": "1.0.0",
+  "description": "Business Card OCR Application with centralized database",
+  "main": "test-database.js",
+  "scripts": {
+    "test-db": "node test-database.js",
+    "test-simple": "node simple-db-test.js"
+  },
+  "dependencies": {
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1"
+  }
+}
