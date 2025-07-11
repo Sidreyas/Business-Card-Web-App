@@ -443,7 +443,7 @@ function App() {
 
       {/* Premium Notification */}
       {notification && (
-        <div className="glass-effect border-b border-white/10 p-3 glow-box">
+        <div className="glass-effect border-b border-white/10 p-3 glow-box fixed top-16 left-0 right-0 z-50">
           <div className="flex items-center justify-center">
             <span className="text-white mr-2">✓</span>
             <span className="text-gradient-premium text-sm font-medium">{notification}</span>
@@ -452,7 +452,7 @@ function App() {
       )}
 
       {/* Main Content Area */}
-      <div className={activePage === 'entries' ? 'pb-20' : ''}>
+      <div className={activePage === 'entries' ? 'pb-20 px-4' : 'px-4'}>
         {activePage === 'capture' && (
           <CapturePageContent onOcrResult={handleOcrResult} userName={userName} />
         )}
@@ -583,7 +583,7 @@ function CapturePageContent({ onOcrResult, userName }) {
         </div>
 
         {/* Premium Features */}
-        <div className={`grid grid-cols-2 gap-3 mb-4 ${hasExpandedContent ? '' : 'flex-shrink-0'}`}>
+        <div className={`grid grid-cols-2 gap-3 mb-4 ${hasExpandedContent ? '' : 'flex-shrink-0'} px-4`}> {/* Added padding */}
           <div className="premium-card glow-box rounded-xl p-3 border border-white/10">
             <div className="text-center">
               <span className="text-xl mb-1 block">⚡</span>
@@ -603,8 +603,8 @@ function CapturePageContent({ onOcrResult, userName }) {
         {/* Spacer to push upload form towards bottom - only in static mode */}
         {!hasExpandedContent && <div className="flex-1"></div>}
 
-        {/* Upload Form positioned at bottom - only show if username is set */}
-        <div className={hasExpandedContent ? 'mt-8' : 'flex-shrink-0'}>
+        {/* Upload Form positioned at bottom */}
+        <div className={hasExpandedContent ? 'mt-8 px-4' : 'flex-shrink-0 px-4'}> {/* Added padding */}
           {isUsernameSet ? (
             <UploadForm onOcrResult={onOcrResult} />
           ) : (
