@@ -1,6 +1,6 @@
 import React from "react";
 
-function DataTable({ entries, onExportPDF, onClearData, onRefresh }) {
+function DataTable({ entries, onExportPDF, onClearData }) {
   if (entries.length === 0) {
     return (
       <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl shadow-2xl p-8 border border-gray-200">
@@ -26,13 +26,6 @@ function DataTable({ entries, onExportPDF, onClearData, onRefresh }) {
         </h2>
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
           <button
-            onClick={onRefresh}
-            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 transform hover:scale-105 shadow-lg"
-            title="Refresh to see new entries from other users"
-          >
-            🔄 Refresh
-          </button>
-          <button
             onClick={onClearData}
             className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300 transform hover:scale-105 shadow-lg"
           >
@@ -52,7 +45,7 @@ function DataTable({ entries, onExportPDF, onClearData, onRefresh }) {
           <thead className="bg-gradient-to-r from-gray-50 to-gray-100 sticky top-0">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
-                Date & User
+                Date, Time & User
               </th>
               <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
                 Contact Information
@@ -86,14 +79,16 @@ function DataTable({ entries, onExportPDF, onClearData, onRefresh }) {
                       </span>
                     )}
                     <div className="text-gray-900 font-bold">
-                      {entry.created_at ? new Date(entry.created_at).toLocaleDateString() : 'Invalid Date'}
+                      {new Date(entry.created_at).toLocaleDateString()}
                     </div>
                     <div className="text-gray-600 text-xs font-medium">
-                      {entry.created_at ? new Date(entry.created_at).toLocaleTimeString() : ''}
+                      {new Date(entry.created_at).toLocaleTimeString()}
                     </div>
-                    <div className="text-blue-600 text-xs font-medium mt-1">
-                      👤 {entry.user_name || 'Anonymous'}
-                    </div>
+                    {entry.user_name && (
+                      <div className="text-blue-600 text-xs font-medium mt-1">
+                        👤 {entry.user_name}
+                      </div>
+                    )}
                   </div>
                 </td>
                 <td className="px-4 py-4 text-sm text-gray-900">
@@ -118,7 +113,7 @@ function DataTable({ entries, onExportPDF, onClearData, onRefresh }) {
                     )}
                     {entry.email && (
                       <div className="flex items-center">
-                        <span className="font-bold text-red-700 mr-2">Email:</span> 
+                        <span className="font-bold text-red-700 mr-2">Email:</span>
                         <a href={`mailto:${entry.email}`} className="text-blue-600 hover:text-blue-800 font-medium hover:underline">
                           {entry.email}
                         </a>
@@ -143,7 +138,7 @@ function DataTable({ entries, onExportPDF, onClearData, onRefresh }) {
                     )}
                     {entry.address && (
                       <div className="flex items-start">
-                        <span className="font-bold text-teal-700 mr-2">Address:</span> 
+                        <span className="font-bold text-gray-700 mr-2">Address:</span> 
                         <span className="text-gray-800 font-medium">{entry.address}</span>
                       </div>
                     )}
@@ -162,11 +157,13 @@ function DataTable({ entries, onExportPDF, onClearData, onRefresh }) {
                   </div>
                 </td>
                 <td className="px-4 py-4 text-sm text-gray-900">
-                  <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                  <div className="max-w-xs">
                     {entry.user_comment ? (
-                      <span className="text-gray-800 italic">"{entry.user_comment}"</span>
+                      <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-l-4 border-yellow-400 p-3 rounded-lg">
+                        <span className="text-gray-800 font-medium">{entry.user_comment}</span>
+                      </div>
                     ) : (
-                      <span className="text-gray-500 italic">No comment</span>
+                      <span className="text-gray-400 italic">No comment</span>
                     )}
                   </div>
                 </td>
