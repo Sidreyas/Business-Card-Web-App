@@ -182,49 +182,37 @@ function UploadForm({ onOcrResult }) {
   }, [stream, showCamera]);
 
   return (
-    <div className="space-y-6">
-      {/* Premium Header */}
-      <div className="text-center">
-        <h2 className="text-2xl font-bold text-gradient-premium mb-2 tracking-tight">
-          AI Card Scanner
-        </h2>
-        <p className="text-sm text-gradient-accent">
-          Professional OCR technology for instant contact extraction
-        </p>
-      </div>
+    <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl shadow-2xl border border-gray-200">
+      <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-gray-800 to-black bg-clip-text text-transparent">
+        Capture Business Card
+      </h2>
       
-      {/* Premium Camera/Upload Toggle */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Camera/Upload Toggle Buttons */}
+      <div className="flex space-x-4 mb-6">
         <button
           onClick={startCamera}
           disabled={loading || showCamera}
-          className={`py-4 px-4 rounded-xl font-bold transition-all duration-300 ${
+          className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 ${
             showCamera
-              ? 'bg-gradient-to-r from-green-400 to-green-600 text-black shadow-lg glow-box'
-              : 'btn-premium glow-box'
+              ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg'
+              : 'bg-gradient-to-r from-gray-800 to-black text-white hover:from-gray-700 hover:to-gray-900 shadow-lg'
           }`}
         >
-          <div className="flex flex-col items-center space-y-1">
-            <span className="text-lg">📷</span>
-            <span className="text-xs">{showCamera ? 'Camera Active' : 'Use Camera'}</span>
-          </div>
+          📷 {showCamera ? 'Camera Active' : 'Use Camera'}
         </button>
         <button
           onClick={() => document.getElementById('file-input').click()}
           disabled={loading || showCamera}
-          className="btn-premium-dark py-4 px-4 rounded-xl font-bold glow-box"
+          className="flex-1 py-3 px-4 rounded-lg font-medium bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-500 hover:to-gray-600 transition-all duration-300 transform hover:scale-105 shadow-lg"
         >
-          <div className="flex flex-col items-center space-y-1">
-            <span className="text-lg">📁</span>
-            <span className="text-xs">Upload File</span>
-          </div>
+          📁 Upload File
         </button>
       </div>
 
-      {/* Premium Camera View */}
+      {/* Camera View */}
       {showCamera && (
-        <div className="premium-card glow-box rounded-xl p-4 border border-white/20">
-          <div className="relative bg-gradient-to-br from-black to-gray-900 rounded-xl overflow-hidden">
+        <div className="mb-6">
+          <div className="relative bg-gradient-to-br from-gray-900 to-black rounded-xl overflow-hidden shadow-inner border border-gray-300">
             <video
               ref={videoRef}
               autoPlay

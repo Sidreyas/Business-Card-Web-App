@@ -411,48 +411,37 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
-      {/* Premium Mobile Header */}
-      <div className="glass-effect border-b border-white/10 sticky top-0 z-40">
-        <div className="p-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 premium-card rounded-xl flex items-center justify-center glow-box">
-                <span className="text-xl">
-                  {activePage === 'capture' ? '📸' : '📋'}
-                </span>
-              </div>
-              <div>
-                <h1 className="text-lg font-bold text-gradient-premium tracking-tight">
-                  {activePage === 'capture' ? 'Card Scanner Pro' : 'My Card Vault'}
-                </h1>
-                {userName && userName !== 'Guest' ? (
-                  <p className="text-xs text-gradient-accent">Welcome back!</p>
-                ) : (
-                  <p className="text-xs text-yellow-400 font-medium">⚠️ Username required</p>
-                )}
-              </div>
-            </div>
-            {(!userName || userName === 'Guest') && (
-              <button
-                onClick={() => setShowUsernameDialog(true)}
-                className="btn-premium px-4 py-2 rounded-xl text-xs font-medium glow-box"
-              >
-                Set Username
-              </button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      {/* Mobile Header */}
+      <div className="bg-gradient-to-r from-gray-800 to-black text-white p-4 shadow-lg">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-lg font-bold">
+              {activePage === 'capture' ? '📸 Card Scanner' : '📋 My Cards'}
+            </h1>
+            {userName && userName !== 'Guest' ? (
+              <p className="text-sm text-gray-300">Welcome, {userName}!</p>
+            ) : (
+              <p className="text-sm text-yellow-300">⚠️ Please set your username first</p>
             )}
           </div>
+          {(!userName || userName === 'Guest') && (
+            <button
+              onClick={() => setShowUsernameDialog(true)}
+              className="text-xs bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded-lg transition-colors font-medium"
+            >
+              Set Username
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Premium Notification */}
+      {/* Notification */}
       {notification && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 max-w-sm w-full mx-4">
-          <div className="premium-card glow-box p-4 rounded-xl border border-white/20">
-            <div className="flex items-center">
-              <span className="text-green-400 mr-3 text-lg">✓</span>
-              <span className="text-white font-medium text-sm">{notification}</span>
-            </div>
+        <div className="bg-green-50 border-b border-green-200 p-3">
+          <div className="flex items-center justify-center">
+            <span className="text-green-600 mr-2">✓</span>
+            <span className="text-green-800 text-sm">{notification}</span>
           </div>
         </div>
       )}
@@ -471,42 +460,30 @@ function App() {
         )}
       </div>
 
-      {/* Premium Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 glass-effect border-t border-white/10 z-40">
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg">
         <div className="flex">
           <button
             onClick={() => setActivePage('capture')}
-            className={`flex-1 flex flex-col items-center py-4 px-4 transition-all duration-300 ${
+            className={`flex-1 flex flex-col items-center py-3 px-4 transition-colors ${
               activePage === 'capture' 
-                ? 'text-white glow-box bg-gradient-to-t from-white/10 to-white/5' 
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                ? 'text-blue-600 bg-blue-50' 
+                : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
             }`}
           >
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center mb-1 transition-all duration-300 ${
-              activePage === 'capture' 
-                ? 'premium-card glow-box' 
-                : 'bg-gray-800/50'
-            }`}>
-              <span className="text-lg">📸</span>
-            </div>
+            <span className="text-xl mb-1">📸</span>
             <span className="text-xs font-medium">Capture</span>
           </button>
           
           <button
             onClick={() => setActivePage('entries')}
-            className={`flex-1 flex flex-col items-center py-4 px-4 transition-all duration-300 ${
+            className={`flex-1 flex flex-col items-center py-3 px-4 transition-colors ${
               activePage === 'entries' 
-                ? 'text-white glow-box bg-gradient-to-t from-white/10 to-white/5' 
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                ? 'text-blue-600 bg-blue-50' 
+                : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
             }`}
           >
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center mb-1 transition-all duration-300 ${
-              activePage === 'entries' 
-                ? 'premium-card glow-box' 
-                : 'bg-gray-800/50'
-            }`}>
-              <span className="text-lg">📋</span>
-            </div>
+            <span className="text-xl mb-1">📋</span>
             <span className="text-xs font-medium">
               Cards ({entries.length})
             </span>
@@ -532,7 +509,7 @@ function App() {
   );
 }
 
-// Premium Capture Page Component
+// Capture Page Component
 function CapturePageContent({ onOcrResult, userName }) {
   const isUsernameSet = userName && userName !== 'Guest';
   
@@ -540,31 +517,29 @@ function CapturePageContent({ onOcrResult, userName }) {
     <div className="p-4 space-y-6">
       {/* Username Warning */}
       {!isUsernameSet && (
-        <div className="premium-card glow-box border border-yellow-400/30 rounded-xl p-4">
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
           <div className="flex items-center">
-            <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-xl flex items-center justify-center mr-3">
-              <span className="text-black text-lg font-bold">⚠️</span>
-            </div>
+            <span className="text-amber-500 mr-3 text-xl">⚠️</span>
             <div>
-              <p className="text-white font-semibold">Username Required</p>
-              <p className="text-gray-300 text-sm mt-1">
-                Set your professional username to start scanning business cards.
+              <p className="text-amber-800 font-medium">Username Required</p>
+              <p className="text-amber-700 text-sm mt-1">
+                Please set your username first to start scanning business cards.
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Premium Hero Section */}
+      {/* Hero Section */}
       <div className="text-center py-8">
-        <div className="w-24 h-24 mx-auto mb-6 premium-card rounded-2xl flex items-center justify-center glow-box">
-          <span className="text-4xl">🃏</span>
+        <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+          <span className="text-3xl">🃏</span>
         </div>
-        <h2 className="text-3xl font-bold text-gradient-premium mb-3 tracking-tight">
-          AI-Powered Card Scanner
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">
+          Scan Business Cards
         </h2>
-        <p className="text-gradient-accent text-sm max-w-md mx-auto leading-relaxed">
-          Professional OCR technology that instantly extracts and organizes contact information from business cards
+        <p className="text-gray-600 text-sm">
+          Upload or capture a business card to extract contact information instantly
         </p>
       </div>
 
@@ -572,32 +547,26 @@ function CapturePageContent({ onOcrResult, userName }) {
       {isUsernameSet ? (
         <UploadForm onOcrResult={onOcrResult} />
       ) : (
-        <div className="premium-card glow-box rounded-xl p-8 text-center border border-white/10">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-gray-600 to-gray-800 rounded-xl flex items-center justify-center opacity-50">
-            <span className="text-2xl">📱</span>
-          </div>
-          <p className="text-gray-400 font-medium">Set your username to enable card scanning</p>
+        <div className="bg-gray-100 rounded-lg p-8 text-center">
+          <span className="text-4xl mb-4 block opacity-50">📱</span>
+          <p className="text-gray-500">Set your username to enable card scanning</p>
         </div>
       )}
       
-      {/* Premium Features Grid */}
+      {/* Features */}
       <div className="grid grid-cols-2 gap-4 mt-8">
-        <div className="premium-card glow-box rounded-xl p-4">
+        <div className="bg-white rounded-lg p-4 shadow-sm border">
           <div className="text-center">
-            <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-br from-white to-gray-300 rounded-xl flex items-center justify-center">
-              <span className="text-xl">⚡</span>
-            </div>
-            <h3 className="font-bold text-sm text-white mb-1">Lightning Fast</h3>
-            <p className="text-xs text-gray-400">Instant AI processing</p>
+            <span className="text-2xl mb-2 block">⚡</span>
+            <h3 className="font-semibold text-sm text-gray-800">Fast OCR</h3>
+            <p className="text-xs text-gray-600 mt-1">Instant text extraction</p>
           </div>
         </div>
-        <div className="premium-card glow-box rounded-xl p-4">
+        <div className="bg-white rounded-lg p-4 shadow-sm border">
           <div className="text-center">
-            <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-br from-white to-gray-300 rounded-xl flex items-center justify-center">
-              <span className="text-xl">☁️</span>
-            </div>
-            <h3 className="font-bold text-sm text-white mb-1">Cloud Sync</h3>
-            <p className="text-xs text-gray-400">Access anywhere</p>
+            <span className="text-2xl mb-2 block">☁️</span>
+            <h3 className="font-semibold text-sm text-gray-800">Cloud Sync</h3>
+            <p className="text-xs text-gray-600 mt-1">Access from any device</p>
           </div>
         </div>
       </div>
@@ -605,37 +574,25 @@ function CapturePageContent({ onOcrResult, userName }) {
   );
 }
 
-// Premium Entries Page Component  
+// Entries Page Component  
 function EntriesPageContent({ entries, onExportPDF }) {
   return (
     <div className="p-4">
-      {/* Premium Stats Card */}
-      <div className="premium-card glow-box rounded-xl p-6 text-white mb-6 border border-white/10">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 premium-card rounded-xl flex items-center justify-center glow-box">
-              <span className="text-xl">💼</span>
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-gradient-premium">Card Collection</h3>
-              <p className="text-xs text-gradient-accent">Professional contacts</p>
-            </div>
-          </div>
-        </div>
-        
+      {/* Stats Card */}
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-4 text-white mb-6">
+        <h3 className="text-lg font-bold mb-2">Your Business Cards</h3>
         <div className="flex justify-between items-center">
           <div>
-            <p className="text-4xl font-bold text-gradient-premium mb-1">{entries.length}</p>
-            <p className="text-sm text-gradient-accent">Business Cards Stored</p>
+            <p className="text-2xl font-bold">{entries.length}</p>
+            <p className="text-sm opacity-90">Total Cards</p>
           </div>
           <div className="flex space-x-2">
             {entries.length > 0 && (
               <button
                 onClick={onExportPDF}
-                className="btn-premium px-4 py-2 rounded-xl text-xs font-medium glow-box flex items-center space-x-2"
+                className="bg-white bg-opacity-20 hover:bg-opacity-30 px-3 py-2 rounded-lg text-xs font-medium transition-colors"
               >
-                <span>📄</span>
-                <span>Export PDF</span>
+                📄 Export PDF
               </button>
             )}
           </div>
