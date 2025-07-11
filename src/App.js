@@ -548,18 +548,8 @@ function CapturePageContent({ onOcrResult, userName }) {
         </p>
       </div>
 
-      {/* Upload Form - only show if username is set */}
-      {isUsernameSet ? (
-        <UploadForm onOcrResult={onOcrResult} />
-      ) : (
-        <div className="premium-card glow-box rounded-xl p-8 text-center border border-white/10">
-          <span className="text-4xl mb-4 block opacity-50">📱</span>
-          <p className="text-gradient-accent">Set your username to enable card scanning</p>
-        </div>
-      )}
-      
       {/* Premium Features */}
-      <div className="grid grid-cols-2 gap-4 mt-8">
+      <div className="grid grid-cols-2 gap-4 mb-8">
         <div className="premium-card glow-box rounded-xl p-4 border border-white/10">
           <div className="text-center">
             <span className="text-2xl mb-2 block">⚡</span>
@@ -575,6 +565,16 @@ function CapturePageContent({ onOcrResult, userName }) {
           </div>
         </div>
       </div>
+
+      {/* Upload Form - only show if username is set */}
+      {isUsernameSet ? (
+        <UploadForm onOcrResult={onOcrResult} />
+      ) : (
+        <div className="premium-card glow-box rounded-xl p-8 text-center border border-white/10">
+          <span className="text-4xl mb-4 block opacity-50">📱</span>
+          <p className="text-gradient-accent">Set your username to enable card scanning</p>
+        </div>
+      )}
     </div>
   );
 }
