@@ -37,6 +37,14 @@ async function query(text, params) {
 // Initialize database tables if they don't exist
 async function initializeTables() {
   try {
+    // Drop existing conflicting views first
+    try {
+      await query('DROP VIEW IF EXISTS business_card_summary CASCADE;');
+      console.log('Dropped existing business_card_summary view');
+    } catch (dropError) {
+      console.log('No existing view to drop or drop failed:', dropError.message);
+    }
+
     // Create users table
     const createUsersTable = `
       CREATE TABLE IF NOT EXISTS users (
@@ -70,7 +78,14 @@ async function initializeTables() {
       );
     `;
 
-    // Create business_card_summary view
+    // Execute table creation
+    await query(createUsersTable);
+    console.log('Users table created successfully');
+    
+    await query(createBusinessCardEntriesTable);
+    console.log('Business card entries table created successfully');
+
+    // Create business_card_summary view after tables are created
     const createSummaryView = `
       CREATE OR REPLACE VIEW business_card_summary AS
       SELECT 
@@ -82,9 +97,8 @@ async function initializeTables() {
       ORDER BY bce.created_at DESC;
     `;
 
-    await query(createUsersTable);
-    await query(createBusinessCardEntriesTable);
     await query(createSummaryView);
+    console.log('Business card summary view created successfully');
     
     console.log('Database tables initialized successfully');
     return true;

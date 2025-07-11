@@ -37,6 +37,14 @@ export default async function handler(req, res) {
       });
     }
 
+    // Drop existing conflicting views first
+    try {
+      await query('DROP VIEW IF EXISTS business_card_summary CASCADE;');
+      console.log('Dropped existing business_card_summary view');
+    } catch (dropError) {
+      console.log('No existing view to drop or drop failed:', dropError.message);
+    }
+
     // Create users table
     const createUsersTable = `
       CREATE TABLE IF NOT EXISTS users (
@@ -70,6 +78,13 @@ export default async function handler(req, res) {
       );
     `;
 
+    // Execute table creation queries
+    await query(createUsersTable);
+    console.log('Users table created/verified');
+
+    await query(createBusinessCardEntriesTable);
+    console.log('Business card entries table created/verified');
+
     // Create business_card_summary view for easier querying
     const createSummaryView = `
       CREATE OR REPLACE VIEW business_card_summary AS
@@ -81,13 +96,6 @@ export default async function handler(req, res) {
       LEFT JOIN users u ON bce.user_name = u.username
       ORDER BY bce.created_at DESC;
     `;
-
-    // Execute table creation queries
-    await query(createUsersTable);
-    console.log('Users table created/verified');
-
-    await query(createBusinessCardEntriesTable);
-    console.log('Business card entries table created/verified');
 
     await query(createSummaryView);
     console.log('Business card summary view created/verified');

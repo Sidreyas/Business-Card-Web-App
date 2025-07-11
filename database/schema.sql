@@ -1,12 +1,16 @@
 -- Business Card OCR Database Schema
 -- PostgreSQL Schema for centralized data storage
 
+-- Drop existing conflicting views first
+DROP VIEW IF EXISTS business_card_summary CASCADE;
+
 -- SQL schema for users table
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(255) UNIQUE NOT NULL,
     last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    total_cards INT DEFAULT 0
+    total_cards INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- SQL schema for business_card_entries table
@@ -29,11 +33,15 @@ CREATE TABLE IF NOT EXISTS business_card_entries (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Add foreign key constraint
-ALTER TABLE business_card_entries
-ADD CONSTRAINT fk_user_name FOREIGN KEY (user_name)
-REFERENCES users (username)
-ON DELETE CASCADE;
+-- Create business_card_summary view
+CREATE OR REPLACE VIEW business_card_summary AS
+SELECT 
+  bce.*,
+  u.last_active as user_last_active,
+  u.total_cards as user_total_cards
+FROM business_card_entries bce
+LEFT JOIN users u ON bce.user_name = u.username
+ORDER BY bce.created_at DESC;
 
 -- Create index for username lookups
 CREATE INDEX IF NOT EXISTS idx_users_username ON users (username);
