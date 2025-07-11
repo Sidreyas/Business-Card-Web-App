@@ -21,7 +21,7 @@ const upload = multer({
 async function performOCR(imageBuffer) {
   try {
     const FormData = require('form-data');
-    const fetch = require('node-fetch');
+    const axios = require('axios');
     
     const form = new FormData();
     form.append('file', imageBuffer, {
@@ -35,23 +35,20 @@ async function performOCR(imageBuffer) {
     form.append('scale', 'true');
     form.append('OCREngine', '2');
 
-    const response = await fetch('https://api.ocr.space/parse/image', {
-      method: 'POST',
-      body: form,
+    const response = await axios.post('https://api.ocr.space/parse/image', form, {
+      headers: {
+        ...form.getHeaders()
+      },
       timeout: 30000
     });
 
-    if (!response.ok) {
-      throw new Error(`OCR API error: ${response.status} ${response.statusText}`);
-    }
-
-    const result = await response.json();
+    const data = response.data;
     
-    if (result.OCRExitCode !== 1) {
-      throw new Error(`OCR failed: ${result.ErrorMessage || 'Unknown error'}`);
+    if (data.OCRExitCode !== 1) {
+      throw new Error(`OCR failed: ${data.ErrorMessage || 'Unknown error'}`);
     }
 
-    const extractedText = result.ParsedResults?.[0]?.ParsedText || '';
+    const extractedText = data.ParsedResults?.[0]?.ParsedText || '';
     if (!extractedText.trim()) {
       throw new Error('No text extracted from image');
     }
