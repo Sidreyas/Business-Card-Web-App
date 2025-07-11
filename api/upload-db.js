@@ -23,8 +23,17 @@ async function performOCR(imageBuffer) {
     const https = require('https');
     const querystring = require('querystring');
     
+    // Check image size (OCR.space has limits)
+    const imageSizeKB = imageBuffer.length / 1024;
+    console.log(`Image size: ${imageSizeKB.toFixed(2)} KB`);
+    
+    if (imageSizeKB > 1024) {
+      console.warn('Image size exceeds 1MB, may cause OCR issues');
+    }
+    
     // Convert image buffer to base64
     const base64Image = imageBuffer.toString('base64');
+    console.log(`Base64 image length: ${base64Image.length}`);
     
     // Prepare form data as URL-encoded string
     const postData = querystring.stringify({
@@ -36,6 +45,8 @@ async function performOCR(imageBuffer) {
       'scale': 'true',
       'OCREngine': '2'
     });
+    
+    console.log('Sending OCR request to OCR.space API...');
 
     // Promise wrapper for https request
     const response = await new Promise((resolve, reject) => {
@@ -50,22 +61,46 @@ async function performOCR(imageBuffer) {
         let data = '';
         res.on('data', chunk => data += chunk);
         res.on('end', () => {
+          console.log('OCR API Response Status:', res.statusCode);
+          console.log('OCR API Raw Response:', data.substring(0, 500)); // Log first 500 chars
+          
+          // Check if response is HTML (error page) instead of JSON
+          if (data.trim().startsWith('<') || data.trim().startsWith('<!')) {
+            reject(new Error('OCR API returned HTML error page instead of JSON'));
+            return;
+          }
+          
           try {
-            resolve(JSON.parse(data));
+            const parsed = JSON.parse(data);
+            resolve(parsed);
           } catch (e) {
-            reject(new Error('Invalid JSON response'));
+            console.error('JSON Parse Error:', e.message);
+            console.error('Raw response that failed to parse:', data);
+            reject(new Error(`Invalid JSON response: ${e.message}`));
           }
         });
       });
 
-      req.on('error', reject);
-      req.on('timeout', () => reject(new Error('Request timeout')));
+      req.on('error', (error) => {
+        console.error('OCR API Request Error:', error);
+        reject(error);
+      });
+      
+      req.on('timeout', () => {
+        console.error('OCR API Request Timeout');
+        reject(new Error('Request timeout'));
+      });
+      
       req.write(postData);
       req.end();
     });
 
+    console.log('OCR API Response:', JSON.stringify(response, null, 2));
+
     if (response.OCRExitCode !== 1) {
-      throw new Error(`OCR failed: ${response.ErrorMessage || 'Unknown error'}`);
+      const errorMsg = response.ErrorMessage || response.ErrorDetails || 'Unknown OCR error';
+      console.error('OCR API Error:', errorMsg);
+      throw new Error(`OCR failed: ${errorMsg}`);
     }
 
     const extractedText = response.ParsedResults?.[0]?.ParsedText || '';
@@ -81,11 +116,14 @@ async function performOCR(imageBuffer) {
 
   } catch (error) {
     console.error('OCR failed:', error);
+    
+    // Return a structured error response that can be handled gracefully
     return {
-      text: '',
+      text: `OCR extraction failed: ${error.message}`,
       method: 'ocr_space',
       success: false,
-      error: error.message
+      error: error.message,
+      fallback: true
     };
   }
 }
@@ -271,11 +309,37 @@ export default async function handler(req, res) {
     console.log('Performing OCR on uploaded image...');
     const ocrResult = await performOCR(req.file.buffer);
 
+    // Handle OCR failure gracefully
     if (!ocrResult.success) {
+      console.log('OCR failed, returning error response with details');
+      
+      // If it's a fallback response, still try to parse whatever text we have
+      if (ocrResult.fallback && ocrResult.text) {
+        console.log('Using fallback OCR response');
+        const parsedData = parseBusinessCard(ocrResult.text);
+        
+        return res.status(200).json({
+          success: false,
+          text: ocrResult.text,
+          parsed_data: parsedData,
+          ocr_method: ocrResult.method,
+          parsing_method: 'rule_based',
+          error: 'OCR service unavailable, manual entry required',
+          ocr_error: ocrResult.error,
+          saved_to_database: false
+        });
+      }
+      
       return res.status(500).json({
         error: 'OCR failed',
         details: ocrResult.error,
-        success: false
+        success: false,
+        suggestions: [
+          'Try a clearer image',
+          'Ensure the business card is well-lit',
+          'Make sure text is clearly visible',
+          'Try a smaller file size'
+        ]
       });
     }
 
