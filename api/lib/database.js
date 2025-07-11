@@ -129,7 +129,36 @@ async function deleteBusinessCardEntry(id) {
   return result.rows[0];
 }
 
-// Statistics and Analytics
+// User Management Operations
+async function checkUsernameExists(username) {
+  const queryText = 'SELECT EXISTS(SELECT 1 FROM users WHERE username = $1)';
+  const result = await query(queryText, [username]);
+  return result.rows[0].exists;
+}
+
+async function createUser(username) {
+  const queryText = `
+    INSERT INTO users (username)
+    VALUES ($1)
+    ON CONFLICT (username) DO UPDATE SET last_active = CURRENT_TIMESTAMP
+    RETURNING *
+  `;
+  const result = await query(queryText, [username]);
+  return result.rows[0];
+}
+
+async function updateUserActivity(username) {
+  const queryText = `
+    UPDATE users 
+    SET last_active = CURRENT_TIMESTAMP,
+        total_cards = (SELECT COUNT(*) FROM business_card_entries WHERE user_name = $1)
+    WHERE username = $1
+    RETURNING *
+  `;
+  const result = await query(queryText, [username]);
+  return result.rows[0];
+}
+
 async function getUserStats(userName) {
   const queryText = `
     SELECT 
@@ -171,6 +200,9 @@ module.exports = {
   getBusinessCardEntry,
   updateBusinessCardEntry,
   deleteBusinessCardEntry,
+  checkUsernameExists,
+  createUser,
+  updateUserActivity,
   getUserStats,
   getGlobalStats
 };

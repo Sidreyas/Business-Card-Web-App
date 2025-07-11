@@ -1,6 +1,18 @@
 -- Business Card OCR Database Schema
 -- PostgreSQL Schema for centralized data storage
 
+-- Users table to manage unique usernames
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    total_cards INTEGER DEFAULT 0
+);
+
+-- Create index for username lookups
+CREATE INDEX IF NOT EXISTS idx_users_username ON users (username);
+
 -- Main table for all business card entries
 CREATE TABLE IF NOT EXISTS business_card_entries (
     id SERIAL PRIMARY KEY,

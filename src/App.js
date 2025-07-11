@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import UploadForm from './components/UploadForm';
 import DataTable from './components/DataTable';
 import CommentModal from './components/CommentModal';
+import UsernameDialog from './components/UsernameDialog';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -174,6 +175,7 @@ function App() {
   const [currentProcessingDate, setCurrentProcessingDate] = useState('');
   const [notification, setNotification] = useState('');
   const [activePage, setActivePage] = useState('capture'); // 'capture' or 'entries'
+  const [showUsernameDialog, setShowUsernameDialog] = useState(false);
 
   // Load entries from API on component mount
   useEffect(() => {
@@ -237,6 +239,36 @@ function App() {
       localStorage.setItem('businessCardOcrUserName', userName);
     }
   }, [userName]);
+
+  // Handle username save from dialog
+  const handleUsernameSave = async (newUsername) => {
+    try {
+      // Create user in database
+      const response = await fetch('/api/check-username', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: newUsername }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save username');
+      }
+
+      // Update local state
+      setUserName(newUsername);
+      localStorage.setItem('businessCardOcrUserName', newUsername);
+      
+      setNotification(`Username updated to "${newUsername}"`);
+      setTimeout(() => setNotification(''), 3000);
+      
+    } catch (error) {
+      console.error('Error saving username:', error);
+      throw error; // Re-throw to let dialog handle the error display
+    }
+  };
 
   const handleOcrResult = (ocrText, parsedData, responseUsername, responseDate) => {
     setCurrentOcrText(ocrText);
@@ -401,12 +433,7 @@ function App() {
             <p className="text-sm text-gray-300">Welcome, {userName}!</p>
           </div>
           <button
-            onClick={() => {
-              const newName = prompt('Enter your name:', userName);
-              if (newName && newName.trim()) {
-                setUserName(newName.trim());
-              }
-            }}
+            onClick={() => setShowUsernameDialog(true)}
             className="text-xs bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg transition-colors"
           >
             Change User
@@ -476,6 +503,13 @@ function App() {
         onSave={handleSaveComment}
         parsedData={currentParsedData}
         userName={userName}
+      />
+      
+      <UsernameDialog
+        isOpen={showUsernameDialog}
+        onClose={() => setShowUsernameDialog(false)}
+        onSave={handleUsernameSave}
+        currentUsername={userName}
       />
     </div>
   );
