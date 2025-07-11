@@ -174,26 +174,46 @@ function App() {
   const [currentProcessingDate, setCurrentProcessingDate] = useState('');
   const [notification, setNotification] = useState('');
 
-  // Load entries from localStorage on component mount
+  // Load entries from API on component mount
   useEffect(() => {
-    const savedEntries = localStorage.getItem('businessCardOcrEntries');
-    if (savedEntries) {
+    const loadEntriesFromAPI = async () => {
       try {
-        const parsedEntries = JSON.parse(savedEntries);
-        setEntries(parsedEntries);
-        if (parsedEntries.length > 0) {
-          setNotification(`Loaded ${parsedEntries.length} saved business card${parsedEntries.length > 1 ? 's' : ''} from your device.`);
-          setTimeout(() => setNotification(''), 3000);
+        const response = await fetch('/api/entries?limit=100');
+        if (response.ok) {
+          const data = await response.json();
+          const apiEntries = data.entries || [];
+          setEntries(apiEntries);
+          if (apiEntries.length > 0) {
+            setNotification(`Loaded ${apiEntries.length} business card${apiEntries.length > 1 ? 's' : ''} from database.`);
+            setTimeout(() => setNotification(''), 3000);
+          }
+        } else {
+          // Fallback to localStorage if API fails
+          const savedEntries = localStorage.getItem('businessCardOcrEntries');
+          if (savedEntries) {
+            const parsedEntries = JSON.parse(savedEntries);
+            setEntries(parsedEntries);
+            setNotification(`API unavailable. Loaded ${parsedEntries.length} saved entries from device.`);
+            setTimeout(() => setNotification(''), 3000);
+          }
         }
       } catch (error) {
-        console.error('Error parsing saved entries:', error);
-        // If there's an error, start with empty array
-        setEntries([]);
+        console.error('Error loading entries from API:', error);
+        // Fallback to localStorage
+        const savedEntries = localStorage.getItem('businessCardOcrEntries');
+        if (savedEntries) {
+          const parsedEntries = JSON.parse(savedEntries);
+          setEntries(parsedEntries);
+          setNotification(`API error. Loaded ${parsedEntries.length} entries from device.`);
+          setTimeout(() => setNotification(''), 3000);
+        }
       }
-    }
+    };
+
+    loadEntriesFromAPI();
   }, []);
 
-  // Save entries to localStorage whenever entries change
+  // Backup entries to localStorage (fallback only)
   useEffect(() => {
     if (entries.length > 0) {
       localStorage.setItem('businessCardOcrEntries', JSON.stringify(entries));
@@ -346,6 +366,26 @@ function App() {
       setNotification('All data has been cleared successfully.');
       setTimeout(() => setNotification(''), 3000);
     }
+  };
+
+  // Function to refresh data from API
+  const refreshDataFromAPI = async () => {
+    try {
+      const response = await fetch('/api/entries?limit=100');
+      if (response.ok) {
+        const data = await response.json();
+        const apiEntries = data.entries || [];
+        setEntries(apiEntries);
+        setNotification(`Refreshed! Loaded ${apiEntries.length} business cards from database.`);
+        setTimeout(() => setNotification(''), 3000);
+        return true;
+      }
+    } catch (error) {
+      console.error('Error refreshing from API:', error);
+      setNotification('Failed to refresh from database. Showing cached data.');
+      setTimeout(() => setNotification(''), 3000);
+    }
+    return false;
   };
 
   return (
