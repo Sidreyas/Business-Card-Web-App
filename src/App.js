@@ -178,6 +178,26 @@ function App() {
   const [activePage, setActivePage] = useState('capture'); // 'capture' or 'entries'
   const [showUsernameDialog, setShowUsernameDialog] = useState(false);
 
+  // Function to refresh data from API
+  const refreshDataFromAPI = async () => {
+    try {
+      const response = await fetch('/api/entries?limit=100');
+      if (response.ok) {
+        const data = await response.json();
+        const apiEntries = data.entries || [];
+        setEntries(apiEntries);
+        setNotification(`Refreshed! Loaded ${apiEntries.length} business cards from database.`);
+        setTimeout(() => setNotification(''), 3000);
+        return true;
+      }
+    } catch (error) {
+      console.error('Error refreshing from API:', error);
+      setNotification('Failed to refresh from database. Showing cached data.');
+      setTimeout(() => setNotification(''), 3000);
+    }
+    return false;
+  };
+
   // Load entries from API on component mount
   useEffect(() => {
     const loadEntriesFromAPI = async () => {
@@ -273,7 +293,7 @@ function App() {
     }
   };
 
-  const handleOcrResult = (ocrText, parsedData, responseUsername, responseDate, entryId = null) => {
+  const handleOcrResult = async (ocrText, parsedData, responseUsername, responseDate, entryId = null) => {
     setCurrentOcrText(ocrText);
     
     // Store the database entry ID if provided
@@ -303,24 +323,13 @@ function App() {
     // Store the processing date
     setCurrentProcessingDate(responseDate || new Date().toLocaleDateString());
     
+    // Refresh data from database to get the latest entries
+    await refreshDataFromAPI();
+    
     setShowModal(true);
   };
 
   const handleSaveComment = async (comment) => {
-    const newEntry = {
-      id: Date.now(),
-      ocrText: currentOcrText,
-      parsedData: currentParsedData,
-      comment: comment,
-      user_comment: comment, // Add this for DataTable compatibility
-      timestamp: new Date().toISOString(),
-      generatedBy: userName,
-      generatedOn: currentProcessingDate || new Date().toLocaleDateString()
-    };
-
-    // Save to local state immediately
-    setEntries([...entries, newEntry]);
-    
     // Try to save comment to database if we have the entry ID
     if (currentEntryId && comment.trim()) {
       try {
@@ -340,19 +349,38 @@ function App() {
           console.log('Comment saved to database:', result);
           setNotification('Comment saved successfully!');
           setTimeout(() => setNotification(''), 3000);
+          
+          // Refresh data from database to show updated comment
+          await refreshDataFromAPI();
         } else {
           const errorData = await response.json();
           console.error('Failed to save comment to database:', errorData);
-          setNotification('Comment saved locally only (database update failed)');
+          setNotification('Failed to save comment to database');
           setTimeout(() => setNotification(''), 3000);
         }
       } catch (error) {
         console.error('Error saving comment to database:', error);
-        setNotification('Comment saved locally only (network error)');
+        setNotification('Network error: Failed to save comment');
         setTimeout(() => setNotification(''), 3000);
       }
+    } else if (!currentEntryId) {
+      // Fallback: create local entry if no database ID
+      const newEntry = {
+        id: Date.now(),
+        ocrText: currentOcrText,
+        parsedData: currentParsedData,
+        comment: comment,
+        user_comment: comment,
+        timestamp: new Date().toISOString(),
+        generatedBy: userName,
+        generatedOn: currentProcessingDate || new Date().toLocaleDateString()
+      };
+      setEntries([...entries, newEntry]);
+      setNotification('Comment saved locally (no database entry ID available)');
+      setTimeout(() => setNotification(''), 3000);
     } else {
-      console.log('Comment saved locally (no database entry ID available)');
+      setNotification('No comment to save');
+      setTimeout(() => setNotification(''), 3000);
     }
 
     setShowModal(false);
@@ -435,26 +463,6 @@ function App() {
     doc.save(`business-cards-${new Date().getTime()}.pdf`);
   };
 
-  // Function to refresh data from API
-  const refreshDataFromAPI = async () => {
-    try {
-      const response = await fetch('/api/entries?limit=100');
-      if (response.ok) {
-        const data = await response.json();
-        const apiEntries = data.entries || [];
-        setEntries(apiEntries);
-        setNotification(`Refreshed! Loaded ${apiEntries.length} business cards from database.`);
-        setTimeout(() => setNotification(''), 3000);
-        return true;
-      }
-    } catch (error) {
-      console.error('Error refreshing from API:', error);
-      setNotification('Failed to refresh from database. Showing cached data.');
-      setTimeout(() => setNotification(''), 3000);
-    }
-    return false;
-  };
-
   return (
     <div className="min-h-screen" style={{background: 'var(--gradient-primary)'}}>
       {/* Premium Mobile Header */}
@@ -506,6 +514,7 @@ function App() {
           <EntriesPageContent 
             entries={entries} 
             onExportPDF={handleExportPDF}
+            onRefresh={refreshDataFromAPI}
           />
         )}
       </div>
@@ -665,7 +674,7 @@ function CapturePageContent({ onOcrResult, userName }) {
 }
 
 // Premium Entries Page Component  
-function EntriesPageContent({ entries, onExportPDF }) {
+function EntriesPageContent({ entries, onExportPDF, onRefresh }) {
   return (
     <div className="p-4">
       {/* Premium Stats Card */}
@@ -688,6 +697,13 @@ function EntriesPageContent({ entries, onExportPDF }) {
             <p className="text-sm text-gradient-accent">Business Cards Stored</p>
           </div>
           <div className="flex space-x-2">
+            <button
+              onClick={onRefresh}
+              className="btn-premium px-4 py-2 rounded-xl text-xs font-medium glow-box flex items-center space-x-2"
+            >
+              <span>🔄</span>
+              <span>Refresh</span>
+            </button>
             {entries.length > 0 && (
               <button
                 onClick={onExportPDF}
