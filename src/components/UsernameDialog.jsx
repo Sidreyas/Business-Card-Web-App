@@ -59,7 +59,11 @@ function UsernameDialog({ isOpen, onClose, onSave, currentUsername }) {
       // Save the username
       try {
         await onSave(newUsername.trim());
-        handleClose();
+        // Update local state immediately to prevent handleClose issues
+        setNewUsername(newUsername.trim());
+        setError('');
+        setLoading(false);
+        onClose(); // Close directly without going through handleClose
       } catch (saveError) {
         console.error('Username save error:', saveError);
         
@@ -82,7 +86,9 @@ function UsernameDialog({ isOpen, onClose, onSave, currentUsername }) {
 
   const handleClose = () => {
     // Don't allow closing if no username is set (first-time users)
-    if (!currentUsername || currentUsername === 'Guest') {
+    // Check both currentUsername prop and newUsername state
+    const effectiveUsername = newUsername.trim() || currentUsername;
+    if (!effectiveUsername || effectiveUsername === 'Guest') {
       setError('Please set a username to continue using the app');
       return;
     }
