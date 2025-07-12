@@ -660,10 +660,10 @@ function CapturePageContent({ onOcrResult, userName }) {
             <span className="text-2xl">🃏</span>
           </div>
           <h2 className="text-xl font-bold text-gradient-premium mb-2">
-            AI Card Scanner Pro
+            Business Card Scanner 
           </h2>
           <p className="text-gradient-accent text-xs">
-            Upload or capture a business card to extract contact information instantly
+            capture a business card to extract contact information instantly
           </p>
         </div>
 

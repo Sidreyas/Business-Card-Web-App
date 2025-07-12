@@ -154,7 +154,7 @@ function UploadForm({ onOcrResult }) {
           AI Card Scanner
         </h2>
         <p className="text-sm text-gradient-accent">
-          Professional OCR technology for instant contact extraction
+         Try capturing clear business card images for better results.
         </p>
       </div>
       
