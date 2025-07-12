@@ -158,21 +158,11 @@ function UploadForm({ onOcrResult }) {
         </p>
       </div>
       
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={() => document.getElementById('file-input').click()}
-          disabled={loading || showCamera}
-          className="btn-premium-dark py-4 px-4 rounded-xl font-bold glow-box"
-        >
-          <div className="flex flex-col items-center space-y-1">
-            <span className="text-lg">📁</span>
-            <span className="text-xs">Upload File</span>
-          </div>
-        </button>
+      <div className="px-4">
         <button
           onClick={startCamera}
           disabled={loading || showCamera}
-          className="btn-premium py-4 px-4 rounded-xl font-bold glow-box"
+          className="w-full btn-premium py-4 px-4 rounded-xl font-bold glow-box"
         >
           <div className="flex flex-col items-center space-y-1">
             <span className="text-lg">📷</span>
