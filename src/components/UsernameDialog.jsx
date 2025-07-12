@@ -63,7 +63,11 @@ function UsernameDialog({ isOpen, onClose, onSave, currentUsername }) {
         setNewUsername(newUsername.trim());
         setError('');
         setLoading(false);
-        onClose(); // Close directly without going through handleClose
+        
+        // Small delay to ensure parent state is updated
+        setTimeout(() => {
+          onClose(); // Close directly without going through handleClose
+        }, 100);
       } catch (saveError) {
         console.error('Username save error:', saveError);
         
