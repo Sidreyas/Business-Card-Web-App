@@ -291,9 +291,23 @@ function App() {
         body: JSON.stringify({ username: newUsername }),
       });
 
+      let responseData;
+      try {
+        responseData = await response.json();
+      } catch (parseError) {
+        console.error('Failed to parse response:', parseError);
+        throw new Error('Server response error. Please try again.');
+      }
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save username');
+        // Handle specific error cases
+        if (response.status === 409 || (responseData.error && responseData.error.toLowerCase().includes('already exists'))) {
+          throw new Error('Username is already taken. Please try a different one.');
+        } else if (response.status === 400) {
+          throw new Error(responseData.error || 'Invalid username. Please check the requirements.');
+        } else {
+          throw new Error(responseData.error || `Server error (${response.status}). Please try again.`);
+        }
       }
 
       // Update local state and localStorage
@@ -305,7 +319,15 @@ function App() {
       
     } catch (error) {
       console.error('Error saving username:', error);
-      throw error; // Re-throw to let dialog handle the error display
+      
+      // Enhance error messages for common issues
+      if (error.message.includes('fetch')) {
+        throw new Error('Network error. Please check your connection and try again.');
+      } else if (error.message.includes('already exists') || error.message.includes('already taken')) {
+        throw new Error('Username is already taken. Please try a different one.');
+      } else {
+        throw error; // Re-throw enhanced error to let dialog handle the display
+      }
     }
   };
 

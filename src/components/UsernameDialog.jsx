@@ -33,11 +33,21 @@ function UsernameDialog({ isOpen, onClose, onSave, currentUsername }) {
 
     try {
       // Check if username exists
-      const checkResponse = await fetch(`/api/check-username?username=${encodeURIComponent(newUsername.trim())}`);
-      const checkData = await checkResponse.json();
-
-      if (!checkResponse.ok) {
-        throw new Error(checkData.error || 'Failed to check username');
+      let checkData;
+      try {
+        const checkResponse = await fetch(`/api/check-username?username=${encodeURIComponent(newUsername.trim())}`);
+        
+        if (!checkResponse.ok) {
+          // If API fails, try to proceed with username creation
+          console.warn('Username check API failed, proceeding with creation attempt');
+          checkData = { exists: false };
+        } else {
+          checkData = await checkResponse.json();
+        }
+      } catch (apiError) {
+        console.warn('Username check API error:', apiError);
+        // If API completely fails, assume username doesn't exist and try to create
+        checkData = { exists: false };
       }
 
       if (checkData.exists && newUsername.trim() !== currentUsername) {
@@ -47,11 +57,24 @@ function UsernameDialog({ isOpen, onClose, onSave, currentUsername }) {
       }
 
       // Save the username
-      await onSave(newUsername.trim());
-      handleClose();
+      try {
+        await onSave(newUsername.trim());
+        handleClose();
+      } catch (saveError) {
+        console.error('Username save error:', saveError);
+        
+        // Check if error is because username already exists
+        if (saveError.message && saveError.message.toLowerCase().includes('already exists')) {
+          setError('Username is already taken. Please try a different one.');
+        } else if (saveError.message && saveError.message.toLowerCase().includes('unique constraint')) {
+          setError('Username is already taken. Please try a different one.');
+        } else {
+          setError(saveError.message || 'Failed to save username. Please check your connection and try again.');
+        }
+      }
     } catch (error) {
-      console.error('Error saving username:', error);
-      setError(error.message || 'Failed to save username. Please try again.');
+      console.error('Unexpected error:', error);
+      setError('Network error. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
