@@ -171,6 +171,7 @@ function App() {
   const [showModal, setShowModal] = useState(false);
   const [currentOcrText, setCurrentOcrText] = useState('');
   const [currentParsedData, setCurrentParsedData] = useState(null);
+  const [currentEntryId, setCurrentEntryId] = useState(null); // Add this to store DB entry ID
   const [userName, setUserName] = useState('');
   const [currentProcessingDate, setCurrentProcessingDate] = useState('');
   const [notification, setNotification] = useState('');
@@ -272,8 +273,13 @@ function App() {
     }
   };
 
-  const handleOcrResult = (ocrText, parsedData, responseUsername, responseDate) => {
+  const handleOcrResult = (ocrText, parsedData, responseUsername, responseDate, entryId = null) => {
     setCurrentOcrText(ocrText);
+    
+    // Store the database entry ID if provided
+    if (entryId) {
+      setCurrentEntryId(entryId);
+    }
     
     // Update userName if provided from the response
     if (responseUsername) {
@@ -300,21 +306,60 @@ function App() {
     setShowModal(true);
   };
 
-  const handleSaveComment = (comment) => {
+  const handleSaveComment = async (comment) => {
     const newEntry = {
       id: Date.now(),
       ocrText: currentOcrText,
       parsedData: currentParsedData,
       comment: comment,
+      user_comment: comment, // Add this for DataTable compatibility
       timestamp: new Date().toISOString(),
       generatedBy: userName,
       generatedOn: currentProcessingDate || new Date().toLocaleDateString()
     };
+
+    // Save to local state immediately
     setEntries([...entries, newEntry]);
+    
+    // Try to save comment to database if we have the entry ID
+    if (currentEntryId && comment.trim()) {
+      try {
+        const response = await fetch('/api/update-entry', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            id: currentEntryId,
+            user_comment: comment
+          }),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log('Comment saved to database:', result);
+          setNotification('Comment saved successfully!');
+          setTimeout(() => setNotification(''), 3000);
+        } else {
+          const errorData = await response.json();
+          console.error('Failed to save comment to database:', errorData);
+          setNotification('Comment saved locally only (database update failed)');
+          setTimeout(() => setNotification(''), 3000);
+        }
+      } catch (error) {
+        console.error('Error saving comment to database:', error);
+        setNotification('Comment saved locally only (network error)');
+        setTimeout(() => setNotification(''), 3000);
+      }
+    } else {
+      console.log('Comment saved locally (no database entry ID available)');
+    }
+
     setShowModal(false);
     setCurrentOcrText('');
     setCurrentParsedData(null);
     setCurrentProcessingDate('');
+    setCurrentEntryId(null); // Clear the entry ID
   };
 
   const handleExportPDF = () => {
@@ -583,7 +628,7 @@ function CapturePageContent({ onOcrResult, userName }) {
         </div>
 
         {/* Premium Features */}
-        <div className={`grid grid-cols-2 gap-3 mb-4 ${hasExpandedContent ? '' : 'flex-shrink-0'} px-4`}> {/* Added padding */}
+        <div className={`grid grid-cols-2 gap-3 mb-4 px-4`}> {/* Ensure padding */}
           <div className="premium-card glow-box rounded-xl p-3 border border-white/10">
             <div className="text-center">
               <span className="text-xl mb-1 block">⚡</span>
@@ -604,7 +649,7 @@ function CapturePageContent({ onOcrResult, userName }) {
         {!hasExpandedContent && <div className="flex-1"></div>}
 
         {/* Upload Form positioned at bottom */}
-        <div className={hasExpandedContent ? 'mt-8 px-4' : 'flex-shrink-0 px-4'}> {/* Added padding */}
+        <div className={hasExpandedContent ? 'mt-8 px-4' : 'flex-shrink-0 px-4'}> {/* Ensure padding */}
           {isUsernameSet ? (
             <UploadForm onOcrResult={onOcrResult} />
           ) : (

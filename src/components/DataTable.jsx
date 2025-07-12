@@ -111,10 +111,10 @@ function DataTable({ entries, onExportPDF }) {
                 )}
                 
                 {/* Comment Section */}
-                {entry.user_comment && (
+                {(entry.user_comment || entry.comment) && (
                   <div className="mt-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg">
                     <div className="text-xs text-yellow-600 font-medium mb-1">Comment</div>
-                    <div className="text-sm text-gray-800">{entry.user_comment}</div>
+                    <div className="text-sm text-gray-800">{entry.user_comment || entry.comment}</div>
                   </div>
                 )}
 

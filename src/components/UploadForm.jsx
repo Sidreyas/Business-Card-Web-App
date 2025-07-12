@@ -103,7 +103,7 @@ function UploadForm({ onOcrResult }) {
     formData.append("username", username);
 
     try {
-      const res = await axios.post("/api/upload", formData, {
+      const res = await axios.post("/api/upload-db", formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -112,10 +112,11 @@ function UploadForm({ onOcrResult }) {
       if (res.data && res.data.success) {
         const rawText = res.data.text || '';
         const parsedData = res.data.parsed_data || null;
-        const responseUsername = res.data.username || getUsername();
-        const responseDate = res.data.date || new Date().toLocaleDateString();
+        const responseUsername = res.data.user_name || getUsername();
+        const responseDate = res.data.created_at ? new Date(res.data.created_at).toLocaleDateString() : new Date().toLocaleDateString();
+        const entryId = res.data.id; // Get the database entry ID
         
-        onOcrResult(rawText, parsedData, responseUsername, responseDate);
+        onOcrResult(rawText, parsedData, responseUsername, responseDate, entryId);
         setImage(null);
         setPreview(null);
         const fileInput = document.getElementById('file-input');
