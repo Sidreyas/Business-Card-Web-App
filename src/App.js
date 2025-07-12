@@ -169,11 +169,9 @@ const parseBusinessCard = (ocrText) => {
 function App() {
   const [entries, setEntries] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [currentOcrText, setCurrentOcrText] = useState('');
   const [currentParsedData, setCurrentParsedData] = useState(null);
   const [currentEntryId, setCurrentEntryId] = useState(null); // Add this to store DB entry ID
   const [userName, setUserName] = useState('');
-  const [currentProcessingDate, setCurrentProcessingDate] = useState('');
   const [notification, setNotification] = useState('');
   const [activePage, setActivePage] = useState('capture'); // 'capture' or 'entries'
   const [showUsernameDialog, setShowUsernameDialog] = useState(false);
@@ -250,14 +248,28 @@ function App() {
 
   // Load username from localStorage on component mount
   useEffect(() => {
-    const savedUserName = localStorage.getItem('businessCardOcrUserName');
-    if (savedUserName) {
-      setUserName(savedUserName);
-    } else {
-      setUserName('Guest'); // Default to Guest
-      // Show username dialog for first-time users after a short delay
-      setTimeout(() => setShowUsernameDialog(true), 1000);
-    }
+    const checkAndLoadUsername = async () => {
+      const savedUserName = localStorage.getItem('businessCardOcrUserName');
+      if (savedUserName && savedUserName !== 'Guest') {
+        setUserName(savedUserName);
+        // Verify user exists in database
+        try {
+          await fetch('/api/check-username', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: savedUserName }),
+          });
+        } catch (error) {
+          console.error('Error verifying user in database:', error);
+        }
+      } else {
+        // New user - show username dialog immediately
+        setUserName('');
+        setTimeout(() => setShowUsernameDialog(true), 500);
+      }
+    };
+
+    checkAndLoadUsername();
   }, []);
 
   // Save username to localStorage when it changes
@@ -284,11 +296,11 @@ function App() {
         throw new Error(errorData.error || 'Failed to save username');
       }
 
-      // Update local state
+      // Update local state and localStorage
       setUserName(newUsername);
       localStorage.setItem('businessCardOcrUserName', newUsername);
       
-      setNotification(`Username updated to "${newUsername}"`);
+      setNotification(`Welcome ${newUsername}! Your account has been created.`);
       setTimeout(() => setNotification(''), 3000);
       
     } catch (error) {
@@ -298,8 +310,6 @@ function App() {
   };
 
   const handleOcrResult = async (ocrText, parsedData, responseUsername, responseDate, entryId = null) => {
-    setCurrentOcrText(ocrText);
-    
     // Store the database entry ID if provided
     if (entryId) {
       setCurrentEntryId(entryId);
@@ -323,9 +333,6 @@ function App() {
     }
     
     setCurrentParsedData(finalParsedData);
-    
-    // Store the processing date
-    setCurrentProcessingDate(responseDate || new Date().toLocaleDateString());
     
     // Refresh data from database to get the latest entries
     await refreshDataFromAPI(false);
@@ -376,9 +383,7 @@ function App() {
     }
 
     setShowModal(false);
-    setCurrentOcrText('');
     setCurrentParsedData(null);
-    setCurrentProcessingDate('');
     setCurrentEntryId(null); // Clear the entry ID
   };
 
@@ -478,21 +483,41 @@ function App() {
               <h1 className="text-lg font-bold text-gradient-premium">
                 {activePage === 'capture' ? 'Card Scanner Pro' : 'My Card Vault'}
               </h1>
-              {userName && userName !== 'Guest' ? (
-                <p className="text-xs text-gradient-accent">Professional OCR Technology</p>
-              ) : (
-                <p className="text-xs text-yellow-300">⚠️ Please set your username first</p>
-              )}
+              <p className="text-xs text-gradient-accent">Professional OCR Technology</p>
             </div>
           </div>
-          {(!userName || userName === 'Guest') && (
-            <button
-              onClick={() => setShowUsernameDialog(true)}
-              className="btn-premium px-4 py-2 rounded-xl text-xs font-medium glow-box"
-            >
-              Set Username
-            </button>
-          )}
+          
+          {/* Username Display / Set Username Button */}
+          <div className="flex items-center space-x-2">
+            {userName && userName !== 'Guest' ? (
+              <div className="flex items-center space-x-3">
+                <div className="text-right">
+                  <p className="text-sm text-gradient-premium font-bold">👤 {userName}</p>
+                  <p className="text-xs text-gradient-accent">Welcome back!</p>
+                </div>
+                <button
+                  onClick={() => setShowUsernameDialog(true)}
+                  className="w-8 h-8 premium-card rounded-lg flex items-center justify-center glow-box hover:bg-white/20 transition-colors"
+                  title="Change username"
+                >
+                  <span className="text-xs">⚙️</span>
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <div className="text-right">
+                  <p className="text-xs text-red-300 font-medium">⚠️ No username</p>
+                  <p className="text-xs text-gradient-accent">Please set</p>
+                </div>
+                <button
+                  onClick={() => setShowUsernameDialog(true)}
+                  className="btn-premium px-4 py-2 rounded-xl text-sm font-medium glow-box pulse"
+                >
+                  👤 Set Username
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

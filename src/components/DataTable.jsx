@@ -51,8 +51,10 @@ function DataTable({ entries, onExportPDF }) {
                 </div>
               </div>
               {entry.user_name && (
-                <div className="text-xs text-blue-600 font-medium">
-                  👤 {entry.user_name}
+                <div className="flex items-center space-x-1">
+                  <span className="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded-full">
+                    👤 {entry.user_name}
+                  </span>
                 </div>
               )}
             </div>
