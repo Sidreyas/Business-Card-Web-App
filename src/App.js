@@ -179,21 +179,25 @@ function App() {
   const [showUsernameDialog, setShowUsernameDialog] = useState(false);
 
   // Function to refresh data from API
-  const refreshDataFromAPI = async () => {
+  const refreshDataFromAPI = async (showNotification = false) => {
     try {
       const response = await fetch('/api/entries?limit=100');
       if (response.ok) {
         const data = await response.json();
         const apiEntries = data.entries || [];
         setEntries(apiEntries);
-        setNotification(`Refreshed! Loaded ${apiEntries.length} business cards from database.`);
-        setTimeout(() => setNotification(''), 3000);
+        if (showNotification) {
+          setNotification(`Refreshed! Loaded ${apiEntries.length} business cards from database.`);
+          setTimeout(() => setNotification(''), 3000);
+        }
         return true;
       }
     } catch (error) {
       console.error('Error refreshing from API:', error);
-      setNotification('Failed to refresh from database. Showing cached data.');
-      setTimeout(() => setNotification(''), 3000);
+      if (showNotification) {
+        setNotification('Failed to refresh from database. Showing cached data.');
+        setTimeout(() => setNotification(''), 3000);
+      }
     }
     return false;
   };
@@ -324,7 +328,7 @@ function App() {
     setCurrentProcessingDate(responseDate || new Date().toLocaleDateString());
     
     // Refresh data from database to get the latest entries
-    await refreshDataFromAPI();
+    await refreshDataFromAPI(false);
     
     setShowModal(true);
   };
@@ -351,7 +355,7 @@ function App() {
           setTimeout(() => setNotification(''), 3000);
           
           // Refresh data from database to show updated comment
-          await refreshDataFromAPI();
+          await refreshDataFromAPI(true);
         } else {
           const errorData = await response.json();
           console.error('Failed to save comment to database:', errorData);
@@ -364,19 +368,7 @@ function App() {
         setTimeout(() => setNotification(''), 3000);
       }
     } else if (!currentEntryId) {
-      // Fallback: create local entry if no database ID
-      const newEntry = {
-        id: Date.now(),
-        ocrText: currentOcrText,
-        parsedData: currentParsedData,
-        comment: comment,
-        user_comment: comment,
-        timestamp: new Date().toISOString(),
-        generatedBy: userName,
-        generatedOn: currentProcessingDate || new Date().toLocaleDateString()
-      };
-      setEntries([...entries, newEntry]);
-      setNotification('Comment saved locally (no database entry ID available)');
+      setNotification('No database entry ID available - cannot save comment');
       setTimeout(() => setNotification(''), 3000);
     } else {
       setNotification('No comment to save');
@@ -399,31 +391,37 @@ function App() {
     
     // Add generation metadata below title
     doc.setFontSize(12);
-    doc.text(`Generated on ${currentProcessingDate || new Date().toLocaleDateString()} by ${userName}`, 20, 35);
+    doc.text(`Generated on ${new Date().toLocaleDateString()} by ${userName}`, 20, 35);
     doc.text(`Total entries: ${entries.length}`, 20, 42);
     
-    // Prepare structured table data (cleaned up)
-    const tableData = entries.slice().reverse().map(entry => [
-      new Date(entry.timestamp).toLocaleDateString() + '\n' + 
-      new Date(entry.timestamp).toLocaleTimeString(),
+    // Prepare table data with correct structure for database entries
+    const tableData = entries.map(entry => {
+      // Format date
+      const entryDate = entry.created_at ? new Date(entry.created_at) : new Date(entry.timestamp);
+      const formattedDate = entryDate.toLocaleDateString() + '\n' + entryDate.toLocaleTimeString();
       
-      // Structured data display
-      [
-        entry.parsedData?.name ? `Name: ${entry.parsedData.name}` : '',
-        entry.parsedData?.title ? `Title: ${entry.parsedData.title}` : '',
-        entry.parsedData?.company ? `Company: ${entry.parsedData.company}` : '',
-        entry.parsedData?.email ? `Email: ${entry.parsedData.email}` : '',
-        entry.parsedData?.phone ? `Phone: ${entry.parsedData.phone}` : '',
-        entry.parsedData?.website ? `Website: ${entry.parsedData.website}` : '',
-        entry.parsedData?.address ? `Address: ${entry.parsedData.address}` : ''
-      ].filter(field => field).join('\n'),
+      // Format card details
+      const cardDetails = [
+        entry.name ? `Name: ${entry.name}` : '',
+        entry.title ? `Title: ${entry.title}` : '',
+        entry.company ? `Company: ${entry.company}` : '',
+        entry.email ? `Email: ${entry.email}` : '',
+        entry.phone ? `Phone: ${entry.phone}` : '',
+        entry.website ? `Website: ${entry.website}` : '',
+        entry.address ? `Address: ${entry.address}` : ''
+      ].filter(field => field).join('\n');
       
-      entry.comment
-    ]);
+      return [
+        formattedDate,
+        entry.user_name || userName || 'Unknown',
+        cardDetails || 'No details extracted',
+        entry.user_comment || entry.comment || 'No comment'
+      ];
+    });
     
-    // Add table with structured data
+    // Add table with 4 columns as requested
     autoTable(doc, {
-      head: [['Date & Time', 'Structured Contact Information', 'Comment']],
+      head: [['Date', 'Username', 'Card Details', 'Comments']],
       body: tableData,
       startY: 50,
       styles: {
@@ -442,15 +440,19 @@ function App() {
       },
       columnStyles: {
         0: { 
-          cellWidth: 35,
+          cellWidth: 40,
           halign: 'center' 
         },
         1: { 
-          cellWidth: 160,
-          halign: 'left'
+          cellWidth: 50,
+          halign: 'center'
         },
         2: { 
-          cellWidth: 75,
+          cellWidth: 120,
+          halign: 'left'
+        },
+        3: { 
+          cellWidth: 60,
           halign: 'left'
         }
       },
@@ -535,7 +537,11 @@ function App() {
           </button>
           
           <button
-            onClick={() => setActivePage('entries')}
+            onClick={async () => {
+              setActivePage('entries');
+              // Refresh data when switching to entries page
+              await refreshDataFromAPI(false);
+            }}
             className={`flex-1 flex flex-col items-center py-4 px-4 transition-all duration-300 ${
               activePage === 'entries' 
                 ? 'text-white bg-white/10 glow-box' 
@@ -698,7 +704,7 @@ function EntriesPageContent({ entries, onExportPDF, onRefresh }) {
           </div>
           <div className="flex space-x-2">
             <button
-              onClick={onRefresh}
+              onClick={() => onRefresh(true)}
               className="btn-premium px-4 py-2 rounded-xl text-xs font-medium glow-box flex items-center space-x-2"
             >
               <span>🔄</span>
