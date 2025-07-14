@@ -1,53 +1,213 @@
-# Business Card OCR PWA
+# Business Card Web Application
 
-A Progressive Web App for extracting contact information from business cards using multiple OCR engines and AI-powered parsing.
+A modern React web application that extracts text from business card images using OCR technology, with user management and data storage capabilities.
 
-## 🌟 Features
+## 🚀 Features
 
-- 📱 **PWA** - Works on mobile and desktop, installable offline
-- 🔍 **Multi-OCR** - Amazon Textract (primary), Google Cloud Vision, Tesseract (fallbacks)
-- 🤖 **AI Parsing** - Groq/Llama for intelligent field extraction
-- 📷 **Camera Capture** - Take photos directly in the app
-- 💬 **Comments** - Add notes to each scanned card
-- 📊 **Table View** - See all extracted data in organized format
-- 📄 **PDF Export** - Download results as PDF for later reference
-- 🎨 **Modern UI** - Black & white gradient theme with Tailwind CSS
+- **OCR Text Extraction**: Upload business card images and extract text using OCR.space API
+- **User Management**: Username creation and validation system
+- **Data Storage**: Store extracted card data with PostgreSQL database
+- **Modern UI**: Clean, responsive interface with Tailwind CSS
+- **Real-time Processing**: Instant OCR processing and results display
 
-## 🛠 Tech Stack
+## 🏗️ Architecture
 
-- **Frontend**: React + Tailwind CSS + PWA
-- **Backend**: Flask + Amazon Textract + Google Cloud Vision + Tesseract
-- **AI Parsing**: Groq API (Llama 3.3-70B)
-- **PDF Generation**: jsPDF + autoTable
-- **OCR Engines**: Amazon Textract (primary), Google Cloud Vision (fallback), Tesseract (final fallback)
+- **Frontend**: React.js with Tailwind CSS (deployed on Vercel)
+- **Backend**: Express.js API server (deployed on Render) 
+- **Database**: PostgreSQL (hosted on Neon.tech)
+- **OCR Service**: OCR.space API for text extraction
 
-## 🚀 Quick Start
+## 📋 Prerequisites
 
-### Prerequisites
-- Node.js and npm
-- Python 3.8+
-- AWS credentials (for Textract)
-- Google Cloud credentials (optional, for Vision API fallback)
-- Groq API key (for AI parsing)
+- Node.js (v14 or higher)
+- npm or yarn
+- PostgreSQL database (we use Neon.tech)
+- OCR.space API key
 
-### 1. Setup Environment
+## �️ Local Development Setup
+
+### 1. Clone Repository
+
 ```bash
-# Clone or extract the project
-cd Card_OCR
-
-# Copy and configure environment variables
-cp .env.example .env
-# Edit .env with your API keys and credentials
+git clone https://github.com/Sidreyas/Business-Card-Web-App.git
+cd Business-Card-Web-App
 ```
 
-### 2. Start Backend (Terminal 1)
+### 2. Install Dependencies
+
 ```bash
+# Install frontend dependencies
+npm install
+
+# Install backend dependencies
 cd backend
-# Install dependencies
-pip install -r requirements.txt
-# Start server
-python app.py
+npm install
+cd ..
 ```
+
+### 3. Environment Configuration
+
+Create `.env` files for both frontend and backend:
+
+**Backend `.env` (in `/backend` folder):**
+```bash
+DATABASE_URL=your_postgresql_connection_string
+OCR_API_KEY=your_ocr_space_api_key
+FRONTEND_URL=http://localhost:3000
+PORT=5000
+```
+
+**Frontend `.env` (in root folder):**
+```bash
+REACT_APP_API_URL=http://localhost:5000
+```
+
+### 4. Database Setup
+
+The database schema is automatically initialized when the backend starts. Tables created:
+- `users`: Store usernames with unique constraints
+- `entries`: Store extracted card data linked to users
+
+### 5. Start Development Servers
+
+```bash
+# Start backend server (from /backend folder)
+cd backend
+npm run dev
+
+# Start frontend development server (from root folder)
+cd ..
+npm start
+```
+
+The application will be available at:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5000
+
+## 🌐 Production Deployment
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
+
+### Quick Deploy Summary:
+
+1. **Backend (Render)**:
+   - Deploy `/backend` folder as Node.js web service
+   - Set environment variables (DATABASE_URL, OCR_API_KEY, etc.)
+
+2. **Frontend (Vercel)**:
+   - Deploy root folder as Create React App
+   - Update API URL in `src/config/api.js`
+
+## 📡 API Endpoints
+
+### User Management
+- `POST /api/check-username` - Check if username is available
+- `GET /api/entries/:username` - Get all entries for a user
+- `PUT /api/update-entry/:id` - Update an entry
+
+### OCR Processing
+- `POST /api/upload-db` - Upload image, process OCR, and store data
+
+## 🧪 Testing
+
+```bash
+# Run frontend tests
+npm test
+
+# Test backend API endpoints
+cd backend
+npm test
+```
+
+## 🔧 Project Structure
+
+```
+Business-Card-Web-App/
+├── src/                          # React frontend source
+│   ├── components/               # React components
+│   │   ├── UploadForm.jsx       # Main upload interface
+│   │   ├── UsernameDialog.jsx   # Username management
+│   │   ├── DataTable.jsx        # Display extracted data
+│   │   └── CommentModal.jsx     # Edit comments
+│   ├── config/                  # Configuration files
+│   │   └── api.js              # API URL configuration
+│   └── App.js                  # Main React application
+├── backend/                     # Express.js backend
+│   ├── server.js               # Main server file
+│   ├── routes/                 # API route handlers
+│   └── lib/                    # Database utilities
+├── database/                   # Database schema
+└── public/                     # Static assets
+```
+
+## 🔑 Environment Variables
+
+### Required for Backend:
+- `DATABASE_URL`: PostgreSQL connection string
+- `OCR_API_KEY`: OCR.space API key for text extraction
+
+### Optional:
+- `FRONTEND_URL`: For CORS configuration (production)
+- `PORT`: Server port (defaults to 5000)
+
+## 🐛 Common Issues & Solutions
+
+### Development Issues:
+
+1. **CORS Errors**: Ensure backend `FRONTEND_URL` matches frontend URL
+2. **Database Connection**: Verify `DATABASE_URL` format and credentials
+3. **OCR Failures**: Check `OCR_API_KEY` validity and API limits
+
+### Production Issues:
+
+1. **Cold Starts**: First request after inactivity may be slow (Render free tier)
+2. **API Timeouts**: Increase timeout limits for OCR processing
+3. **Database Limits**: Monitor connection count on Neon.tech
+
+## 📊 Current Status
+
+✅ **Fully Functional**: 
+- User registration and validation
+- OCR text extraction from business cards
+- Data storage and retrieval
+- Modern responsive UI
+
+✅ **Production Ready**:
+- Environment-based configuration
+- Error handling and validation
+- Database optimization
+- CORS security
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🔗 Links
+
+- [Live Demo](https://your-app-name.vercel.app) (After deployment)
+- [Backend API](https://business-card-backend-xxxxx.onrender.com) (After deployment)
+- [Database Dashboard](https://console.neon.tech/)
+
+## 💡 Tech Stack
+
+- **Frontend**: React, Tailwind CSS, Create React App
+- **Backend**: Node.js, Express.js, Multer
+- **Database**: PostgreSQL (Neon.tech)
+- **Deployment**: Vercel (Frontend), Render (Backend)
+- **OCR**: OCR.space API
+- **Version Control**: Git, GitHub
+
+---
+
+Built with ❤️ using modern web technologies for reliable business card text extraction.
 
 ### 3. Start Frontend (Terminal 2)
 ```bash
