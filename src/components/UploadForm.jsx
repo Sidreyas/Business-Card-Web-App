@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
+import { getApiUrl } from "../config/api";
 
 function UploadForm({ onOcrResult }) {
   const [image, setImage] = useState(null);
@@ -103,10 +104,11 @@ function UploadForm({ onOcrResult }) {
     formData.append("username", username);
 
     try {
-      const res = await axios.post("/api/upload-db", formData, {
+      const res = await axios.post(getApiUrl("upload-db"), formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        timeout: 60000, // 60 seconds for OCR processing
       });
       
       if (res.data && res.data.success) {

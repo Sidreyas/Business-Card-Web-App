@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { getApiUrl } from "../config/api";
 
 function UsernameDialog({ isOpen, onClose, onSave, currentUsername }) {
   const [newUsername, setNewUsername] = useState(currentUsername || '');
@@ -35,7 +36,7 @@ function UsernameDialog({ isOpen, onClose, onSave, currentUsername }) {
       // Check if username exists
       let checkData;
       try {
-        const checkResponse = await fetch(`/api/check-username?username=${encodeURIComponent(newUsername.trim())}`);
+        const checkResponse = await fetch(getApiUrl(`check-username?username=${encodeURIComponent(newUsername.trim())}`));
         
         if (!checkResponse.ok) {
           // If API fails, try to proceed with username creation

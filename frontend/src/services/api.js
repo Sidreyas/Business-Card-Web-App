@@ -2,11 +2,10 @@
 // /src/services/api.js
 
 import axios from 'axios';
+import { API_CONFIG } from '../config/api.js';
 
 // Configuration
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-vercel-app.vercel.app/api'  // Replace with your Vercel URL
-  : 'http://localhost:3000/api'; // For local development with Vercel dev
+const API_BASE_URL = API_CONFIG.BASE_URL;
 
 // Create axios instance with default config
 const api = axios.create({

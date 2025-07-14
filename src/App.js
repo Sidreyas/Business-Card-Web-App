@@ -3,6 +3,7 @@ import UploadForm from './components/UploadForm';
 import DataTable from './components/DataTable';
 import CommentModal from './components/CommentModal';
 import UsernameDialog from './components/UsernameDialog';
+import { getApiUrl } from './config/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -179,7 +180,7 @@ function App() {
   // Function to refresh data from API
   const refreshDataFromAPI = async (showNotification = false) => {
     try {
-      const response = await fetch('/api/entries?limit=100');
+      const response = await fetch(getApiUrl('entries?limit=100'));
       if (response.ok) {
         const data = await response.json();
         const apiEntries = data.entries || [];
@@ -204,7 +205,7 @@ function App() {
   useEffect(() => {
     const loadEntriesFromAPI = async () => {
       try {
-        const response = await fetch('/api/entries?limit=100');
+        const response = await fetch(getApiUrl('entries?limit=100'));
         if (response.ok) {
           const data = await response.json();
           const apiEntries = data.entries || [];
@@ -254,7 +255,7 @@ function App() {
         setUserName(savedUserName);
         // Verify user exists in database
         try {
-          await fetch('/api/check-username', {
+          await fetch(getApiUrl('check-username'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: savedUserName }),
@@ -283,7 +284,7 @@ function App() {
   const handleUsernameSave = async (newUsername) => {
     try {
       // Create user in database
-      const response = await fetch('/api/check-username', {
+      const response = await fetch(getApiUrl('check-username'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -366,7 +367,7 @@ function App() {
     // Try to save comment to database if we have the entry ID
     if (currentEntryId && comment.trim()) {
       try {
-        const response = await fetch('/api/update-entry', {
+        const response = await fetch(getApiUrl('update-entry'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
