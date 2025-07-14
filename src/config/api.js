@@ -3,7 +3,7 @@
 
 export const API_CONFIG = {
   BASE_URL: process.env.NODE_ENV === 'production' 
-    ? 'https://your-backend-app.onrender.com/api'  // Replace with your Render backend URL
+    ? 'https://business-card-web-app-1.onrender.com/api'  // Your actual Render backend URL
     : 'http://localhost:5000/api', // For local development with Express server
   TIMEOUT: 60000, // 60 seconds for OCR processing
 };
