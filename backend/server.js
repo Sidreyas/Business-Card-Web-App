@@ -23,7 +23,8 @@ app.use(express.urlencoded({ extended: true }));
 // CORS configuration for production
 const corsOptions = {
   origin: [
-    'https://business-card-app-phi.vercel.app', // Your actual Vercel URL
+    'https://business-card-web-app.vercel.app', // New production URL
+    'https://business-card-app-phi.vercel.app', // Old URL (for transition)
     'https://*.vercel.app', // Any Vercel deployments
     'http://localhost:3000', // For local development
     'http://localhost:3001', // Alternative local port
