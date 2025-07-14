@@ -1,0 +1,25 @@
+{
+  "name": "business-card-web-app",
+  "version": "1.0.0",
+  "description": "Business Card Web Application with separated frontend and backend",
+  "scripts": {
+    "start": "cd backend && npm start",
+    "build": "cd backend && npm install",
+    "dev": "cd backend && npm run dev",
+    "install-backend": "cd backend && npm install",
+    "install-frontend": "npm install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Sidreyas/Business-Card-Web-App.git"
+  },
+  "keywords": [
+    "ocr",
+    "business-card",
+    "react",
+    "express",
+    "postgresql"
+  ],
+  "author": "Sidreyas",
+  "license": "MIT"
+}

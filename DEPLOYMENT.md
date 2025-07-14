@@ -10,7 +10,7 @@ This project consists of a React frontend and Express.js backend that need to be
 
 ## Backend Deployment (Render)
 
-### 1. Create New Web Service on Render
+### Option 1: Manual Configuration (Recommended)
 
 1. Go to [Render Dashboard](https://dashboard.render.com/)
 2. Click "New" → "Web Service"
@@ -19,10 +19,36 @@ This project consists of a React frontend and Express.js backend that need to be
    - **Name**: `business-card-backend`
    - **Region**: Choose closest to your users
    - **Branch**: `main`
-   - **Root Directory**: `backend`
+   - **Root Directory**: Leave empty
    - **Runtime**: `Node`
-   - **Build Command**: `npm install`
-   - **Start Command**: `npm start`
+   - **Build Command**: `cd backend && npm ci`
+   - **Start Command**: `cd backend && npm start`
+
+### Option 2: Using render.yaml (Alternative)
+
+If Option 1 doesn't work, the repository includes a `render.yaml` file that Render can automatically detect.
+
+### Troubleshooting "Cannot find module" Error
+
+If you encounter the error you mentioned:
+```
+Error: Cannot find module 'express'
+```
+
+This happens when Render can't find the backend dependencies. Try these solutions:
+
+**Solution 1**: Update Render configuration
+- **Root Directory**: Leave completely empty (don't set to `backend`)
+- **Build Command**: `cd backend && npm ci`
+- **Start Command**: `cd backend && npm start`
+
+**Solution 2**: Alternative commands
+- **Build Command**: `cd backend && npm install --production`
+- **Start Command**: `cd backend && node server.js`
+
+**Solution 3**: Use the render.yaml file
+- The repository includes a `render.yaml` file that should handle the deployment automatically
+- Make sure Render detects this file in your repository root
 
 ### 2. Environment Variables for Render
 
