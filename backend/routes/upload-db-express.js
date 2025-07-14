@@ -2,9 +2,50 @@
 // backend/routes/upload-db.js
 
 const { insertBusinessCardEntry } = require('../lib/database');
+const AWS = require('aws-sdk');
 
-// OCR.space API integration
-async function performOCR(imageBuffer) {
+// AWS Textract integration (Primary OCR)
+async function performTextractOCR(imageBuffer) {
+  try {
+    // Configure AWS Textract
+    const textract = new AWS.Textract({
+      region: process.env.AWS_REGION || 'us-east-1',
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+    });
+
+    const params = {
+      Document: {
+        Bytes: imageBuffer
+      }
+    };
+
+    const result = await textract.detectDocumentText(params).promise();
+    
+    if (result.Blocks) {
+      const textBlocks = result.Blocks
+        .filter(block => block.BlockType === 'LINE')
+        .map(block => block.Text)
+        .join('\n');
+      
+      if (textBlocks.trim().length > 0) {
+        return {
+          success: true,
+          text: textBlocks.trim(),
+          method: 'aws_textract'
+        };
+      }
+    }
+    
+    throw new Error('No text extracted from AWS Textract');
+  } catch (error) {
+    console.error('AWS Textract failed:', error.message);
+    throw error;
+  }
+}
+
+// OCR.space API integration (Fallback OCR)
+async function performOCRSpace(imageBuffer) {
   const FormData = require('form-data');
   const axios = require('axios');
   
@@ -23,7 +64,7 @@ async function performOCR(imageBuffer) {
     const response = await axios.post('https://api.ocr.space/parse/image', form, {
       headers: {
         ...form.getHeaders(),
-        'apikey': process.env.OCR_SPACE_API_KEY || 'helloworld', // Use free API key as fallback
+        'apikey': process.env.OCR_SPACE_API_KEY || 'K87899142388957', // Free tier key
       },
       timeout: 30000,
     });
@@ -44,6 +85,34 @@ async function performOCR(imageBuffer) {
     console.error('OCR.space failed:', error.message);
     throw error;
   }
+}
+
+// Multi-OCR with fallback chain: Textract -> OCR.space
+async function performOCR(imageBuffer) {
+  const errors = [];
+  
+  // Try AWS Textract first
+  try {
+    console.log('Attempting OCR with AWS Textract...');
+    const result = await performTextractOCR(imageBuffer);
+    console.log('AWS Textract successful');
+    return result;
+  } catch (error) {
+    errors.push(`Textract: ${error.message}`);
+    console.log('AWS Textract failed, trying OCR.space fallback...');
+  }
+  
+  // Fallback to OCR.space
+  try {
+    const result = await performOCRSpace(imageBuffer);
+    console.log('OCR.space fallback successful');
+    return result;
+  } catch (error) {
+    errors.push(`OCR.space: ${error.message}`);
+  }
+  
+  // If all methods fail
+  throw new Error(`All OCR methods failed: ${errors.join(', ')}`);
 }
 
 // Enhanced business card parsing
